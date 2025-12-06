@@ -4,7 +4,7 @@
 # Resolve home directory paths
 # ================================
 
-USD_PATH="$HOME/isaacsim_vla_ws/config/vla_franka_2cam.usd"
+USD_PATH="$HOME/isaacsim_vla_ws/config/vla_so101_2cam.usd"
 LAYOUT_PATH="$HOME/isaacsim_vla_ws/config/franka_action_graph_2cam_layout.json"
 
 # ================================
