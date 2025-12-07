@@ -76,6 +76,11 @@ colcon build --packages-select vla_center --symlink-install
 
 #### 1. Utility commands for Isaac Sim
 
+
+> **Attention:**
+> The `config/vla_so101_2cam.usd` for managing all robot, cameras and action graphs is based on a **local** reference of so100 robot. It refers to `config/Collected_so100` for the so100 prim, which is also included in this repo. You can also collect this Asset in Isaac Sim GUI, refer to [Isaac Sim instruction](https://docs.isaacsim.omniverse.nvidia.com/latest/assets/usd_assets_robots.html).
+
+
 **Terminal 1**: Start Isaac Sim GUI
 
 ```bash
