@@ -50,7 +50,7 @@ The following diagram describes how package `vla_center` exchange messages, incl
 
 3. the **obs ZMQ socket** sends the RGB images and current joint states to VLA model, i.e. [SmolVLA](git@github.com:MyLovelyAxe/lerobot.git);
 
-4. the **action ZMQ socket** receives the result action values for each joint of robot arm from VLA model, and sends them to topic `/joint_commmand`, as target state in Isaac Sim;
+4. the **act ZMQ socket** receives the result action values for each joint of robot arm from VLA model, and sends them to topic `/joint_commmand`, as target state in Isaac Sim;
 
 ---
 
@@ -68,7 +68,7 @@ cd
 git clone git@github.com:MyLovelyAxe/isaacsim_vla_ws.git
 
 # Build package
-cd .. # return to workspace
+cd ~/isaacsim_vla_ws
 colcon build --packages-select vla_center --symlink-install
 ```
 
@@ -91,7 +91,9 @@ source setup_isaacsim.sh
 
 This starts Isaac Sim GUI with pre-defined USD for robot arm model SO100, including action graphs to publish current joint states and camera images;
 
-**Terminal 2**: Test image topics 
+**Remember to press PLAY button in Isaac Sim to start simulation!**
+
+**Terminal 2 [Optional]**: Test image topics 
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -101,18 +103,50 @@ source setup_systemros.sh
 
 This starts Rviz2 with pre-defined `.rviz` config, which visualizes images from image topics defined in Isaac Sim;
 
-**Terminal 3**: Test robot arm controller
+**Terminal 3 [Optional]**: Test robot arm controller
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
 source setup_systemros.sh
-./give_joint_command.sh
+./give_joint_command.sh # give new target state
+./reset_joint_command.sh # reset to initial state
 ```
 
-This quickly test the controller node of action graph for the robot arm model, by giving one-time target state, which is specified for robot SO100;
+This quickly test the controller node of action graph for the robot arm model, by giving one-time target state or reset to initial state, which is specified for robot SO100;
 
 #### 2. Message exchange
 
-TODO: start vla_center node
+vla_center package offers 2 node for exchanging message between ROS2 topics from Isaac Sim and ZMQ sockets from VLA model side.
 
-TODO: start smolvla according to forked smolvla repo
+1. Send observation node
+
+This node subscribes to the following topics:
+
+- `/camera1_img`: front-view camera image
+- `/camera2_img`: top-view camera image
+- `/joint_states`: current joint state of robot arm
+
+then publishes the packed message to a ZMQ socket (the VLA model subscribes to this socket for input).
+
+In a new terminal, start this node by:
+
+```bash
+cd ~/isaacsim_vla_ws/
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 run vla_center send_observation
+```
+
+2. Get action node
+
+The VLA model returns action commands as target state to a ZMQ socket, this node subscribes to the socket and publishs the target state to ROS2 topic:
+
+- `/joint_command`: target joint states for Isaac Sim controller node
+
+In a new terminal, start this node by:
+
+```bash
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 run vla_center get_action
+```
