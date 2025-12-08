@@ -25,7 +25,7 @@ class VLAObservationSubscriberNode(Node):
         self.obs_socket = self.obs_context.socket(zmq.PUB)
         self.obs_socket.bind("tcp://127.0.0.1:5556")
 
-        # /camera1_img + /camera2_img: images from simulated cameras
+        # /camera1_img: images from simulated camera
         self.cam1_sub = Subscriber(self, Image, "/camera1_img")
 
         # /joint_states: current joint states of robot arm

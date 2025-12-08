@@ -30,11 +30,11 @@ This workspace works for 2 aspects.
 
 #### 1. Utility commands for Isaac Sim
 
-This workspace also provides helpful commands to:
+This workspace provides helpful commands to:
 
 1. Start Isaac Sim GUI with specified robot arm USD;
 
-2. Test whether image topics receive images from simulated camera, by visualization in Rviz2;
+2. Visulize the image topics messages from simulated camera in Rviz2;
 
 3. Quickly test controller of robot arm, by giving one-time target state;
 
@@ -91,7 +91,8 @@ source setup_isaacsim.sh
 
 This starts Isaac Sim GUI with pre-defined USD for robot arm model SO100, including action graphs to publish current joint states and camera images;
 
-**Remember to press PLAY button in Isaac Sim to start simulation!**
+> **Remember:**
+> Press **PLAY** button in Isaac Sim to start simulation!
 
 **Terminal 2 [Optional]**: Test image topics 
 
@@ -146,6 +147,7 @@ The VLA model returns action commands as target state to a ZMQ socket, this node
 In a new terminal, start this node by:
 
 ```bash
+cd ~/isaacsim_vla_ws/
 source bash/setup_systemros.sh
 source install/setup.bash
 ros2 run vla_center get_action
