@@ -2,7 +2,7 @@
 
 This ROS2 workspace provides packages to implement message communication between Isaac Sim and VLA model, including images, current and target joint states of robot arm. It also contains some utility commands for Isaac Sim.
 
-<!-- ![Description](media/isaacsim_vla_pipeline_demo.gif) -->
+![Description](media/isaacsim_vla_control_demo.gif)
 
 ## Table of Contents
 
@@ -10,6 +10,7 @@ This ROS2 workspace provides packages to implement message communication between
 - [About](#about)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Open tasks](#open_tasks)
 
 ---
 
@@ -168,3 +169,13 @@ conda activate smolvla
 cd ~/lerobot/examples/tutorial/smolvla
 python smolvla_zmq.py
 ```
+
+## Open tasks
+
+For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Besides, the VLA model would be deployed on Jetson Orin Nano. Therefore the on-going open tasks of thie project include:
+
+1. Build a pipeline to generate synthetic dataset which fits lerobot format
+
+2. Fine-tune SmolVLA for some manipulation tasks
+
+3. Deploy fine-tuned SmolVLA on Jetson Orin Nano
