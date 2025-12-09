@@ -40,11 +40,11 @@ This workspace provides helpful commands to:
 
 #### 2. Message exchange
 
-The following diagram describes how package `vla_center` exchange messages, including images, joint states of robot arm, between Isaac Sim and VLA model, which in this project is [Lerobot SmolVLA](git@github.com:MyLovelyAxe/lerobot.git):
+The following diagram describes how messages are exchanged between Isaac Sim and VLA model ([Lerobot SmolVLA](git@github.com:MyLovelyAxe/lerobot.git) in this project) with management of package `vla_center`, including images, joint states of robot arm, between Isaac Sim and VLA model:
 
-<!-- <img src="media/isaacsim_vla_msg_diagram.drawio.svg" width="800"/> -->
+<img src="media/vla_center_diagram.drawio.svg" width="800"/>
 
-1. the topic `/camera1_rgb` receives RGB images from simulated camera in Isaac Sim, and sends them to **obs ZMQ socket**;
+1. the topica `/camera1_rgb` and `/camera2_rgb` receives RGB images from simulated camera in Isaac Sim, and sends them to **obs ZMQ socket**;
 
 2. the topic `/joint_states` receives current joint states from simulated robot arm [SO100](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/assets/usd_assets_robots.html) in Isaac Sim, and sends them to **obs ZMQ socket**;
 
@@ -67,10 +67,12 @@ Please make sure the following setup is already done before installing this pack
 cd
 git clone git@github.com:MyLovelyAxe/isaacsim_vla_ws.git
 
-# Build package
+# Build vla_center package
 cd ~/isaacsim_vla_ws
 colcon build --packages-select vla_center --symlink-install
 ```
+
+As to the installation of VLA model, i.e. Lerobot SmolVLA, refer to [branch `camera/zmq_socket` of this forked repo from official lerobot repo](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket).
 
 ## Usage
 
@@ -94,7 +96,7 @@ This starts Isaac Sim GUI with pre-defined USD for robot arm model SO100, includ
 > **Remember:**
 > Press **PLAY** button in Isaac Sim to start simulation!
 
-**Terminal 2 [Optional]**: Test image topics 
+**[Optional] Terminal 2**: Test image topics 
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -104,7 +106,7 @@ source setup_systemros.sh
 
 This starts Rviz2 with pre-defined `.rviz` config, which visualizes images from image topics defined in Isaac Sim;
 
-**Terminal 3 [Optional]**: Test robot arm controller
+**[Optional] Terminal 3**: Test robot arm controller
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -118,6 +120,8 @@ This quickly test the controller node of action graph for the robot arm model, b
 #### 2. Message exchange
 
 vla_center package offers 2 node for exchanging message between ROS2 topics from Isaac Sim and ZMQ sockets from VLA model side.
+
+> **TODO**: use one launch file to start both nodes
 
 1. Send observation node
 
@@ -151,4 +155,16 @@ cd ~/isaacsim_vla_ws/
 source bash/setup_systemros.sh
 source install/setup.bash
 ros2 run vla_center get_action
+```
+
+#### 3. Start VLA model
+
+The [forked Lerobot repo](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket) provides a script which lets SmolVLA subscribe to observation and publish action commands to Isaac Sim topics via zmq socket, independent of the required robot hardware.
+
+Firstly make sure the forked lerobot repo is already setup. Then in another terminal, run this command to start SmolVLA:
+
+```bash
+conda activate smolvla
+cd ~/lerobot/examples/tutorial/smolvla
+python smolvla_zmq.py
 ```
