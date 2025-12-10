@@ -84,9 +84,9 @@ class VLAObservationSubscriberNode(Node):
 
         # pack everything into one binary blob using np.savez_compressed
         observation = self.pack_observation(
-            ts=timestamp, 
-            joints=curr_joint_states, 
             img1_bytes=img1_bytes, 
+            joints=curr_joint_states,
+            ts=timestamp, 
             encoded_flag=encoded,
         )
 

@@ -29,12 +29,19 @@ class VLAActionReceiverNode(Node):
 
         # timer
         self.timer = self.create_timer(0.01, self.receive_action_callback)
+        self.last_send = self.get_clock().now()
         self.get_logger().info("Ready to receive action commands ......")
 
 
     def receive_action_callback(self):
         """Receive returned action commands from VLA model, publish to topic /joint_command."""
         
+        # # control how often to send action command
+        # now = self.get_clock().now()
+        # if (now - self.last_send).nanoseconds < 1e9 / 1:  # 10 Hz
+        #     return
+        # self.last_send = now
+
         try:
             msg_bytes = self.act_socket.recv(flags=zmq.NOBLOCK)
         except zmq.Again:
@@ -42,7 +49,7 @@ class VLAActionReceiverNode(Node):
 
         # decode received action message
         action_array = np.frombuffer(msg_bytes, dtype=np.float32)
-        self.get_logger().info(f"Received action: {action_array}")
+        # self.get_logger().info(f"Received action: {action_array}")
 
         if action_array.shape[0] != len(SO100_JOINT_NAMES):
             self.get_logger().warn(
@@ -53,7 +60,7 @@ class VLAActionReceiverNode(Node):
 
         # calibrate directions
         calib_action_array = SO100_SIGNS * action_array + SO100_OFFSETS
-        self.get_logger().info(f"Calibrated action: {calib_action_array}")
+        # self.get_logger().info(f"Calibrated action: {calib_action_array}")
 
         # send the action command as target state to /joint_command
         target_joint_states = JointState()
@@ -61,7 +68,7 @@ class VLAActionReceiverNode(Node):
         target_joint_states.name = SO100_JOINT_NAMES
         target_joint_states.position = calib_action_array.tolist()
         self.joint_pub.publish(target_joint_states)
-        self.get_logger().info(f"Published joint command: {target_joint_states.position}")
+        # self.get_logger().info(f"Published joint command: {target_joint_states.position}")
 
 
 def main(args=None):
