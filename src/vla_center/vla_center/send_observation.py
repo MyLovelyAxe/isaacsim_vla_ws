@@ -13,9 +13,9 @@ import numpy as np
 from .robot_configs import SO100_JOINT_NAMES
 
 
-class VLAObservationSubscriberNode(Node):
+class VLAObservationSenderNode(Node):
     def __init__(self):
-        super().__init__("vla_observation_subscriber_node")
+        super().__init__("vla_observation_sender_node")
 
         # to process images
         self.bridge = CvBridge()
@@ -121,7 +121,7 @@ class VLAObservationSubscriberNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = VLAObservationSubscriberNode()
+    node = VLAObservationSenderNode()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
