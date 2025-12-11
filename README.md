@@ -130,9 +130,9 @@ vla_center package offers 2 nodes for exchanging message between ROS2 topics fro
 
 > **TODO**: use one launch file to start both nodes
 
-1. Send observation node
+1. Launch the nodes for observations and actions
 
-This node subscribes to the following topics:
+The `vla_observation_sender_2cam_node` node subscribes to the following topics:
 
 - `/camera1_img`: front-view camera image
 - `/camera2_img`: top-view camera image
@@ -140,31 +140,20 @@ This node subscribes to the following topics:
 
 then publishes the packed message to a ZMQ socket (the VLA model subscribes to this socket for input).
 
-In a new terminal, start this node by:
-
-```bash
-cd ~/isaacsim_vla_ws/
-source bash/setup_systemros.sh
-source install/setup.bash
-ros2 run vla_center send_observation
-```
-
-2. Get action node
-
-The VLA model returns action commands as target state to a ZMQ socket, this node subscribes to the socket and publishs the target state to ROS2 topic:
+The `vla_action_receiver_node` node subscribes to the socket, to which VLA model returns action commands as target state, and publishs the target state to ROS2 topic:
 
 - `/joint_command`: target joint states for Isaac Sim controller node
 
-In a new terminal, start this node by:
+In a new terminal, launch both nodes by:
 
 ```bash
 cd ~/isaacsim_vla_ws/
 source bash/setup_systemros.sh
 source install/setup.bash
-ros2 run vla_center get_action
+ros2 launch vla_center send_obs_get_act.launch.py
 ```
 
-#### 3. Start VLA model
+#### 2. Start VLA model
 
 The [forked Lerobot repo](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket) provides a script which lets SmolVLA subscribe to observation and publish action commands to Isaac Sim topics via zmq socket, independent of the required robot hardware.
 
