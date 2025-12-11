@@ -41,7 +41,7 @@ This workspace provides helpful commands to:
 
 #### 2. Message exchange
 
-The following diagram describes how messages are exchanged between Isaac Sim and VLA model ([Lerobot SmolVLA](git@github.com:MyLovelyAxe/lerobot.git) in this project) with management of package `vla_center`, including images, joint states of robot arm, between Isaac Sim and VLA model:
+The following diagram describes how messages are exchanged between Isaac Sim and VLA model ([LeRobot SmolVLA](https://huggingface.co/blog/smolvla) in this project) with management of package `vla_center`, including images, joint states of robot arm, between Isaac Sim and VLA model:
 
 <img src="media/vla_center_diagram.drawio.svg" width="800"/>
 
@@ -57,11 +57,15 @@ The following diagram describes how messages are exchanged between Isaac Sim and
 
 ## Installation
 
+#### 1. Precondition
+
 Please make sure the following setup is already done before installing this package:
 
 - [ROS2 humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html) installed in system environment on Ubuntu22
 
 - [Isaac Sim GUI 5.1.0](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/index.html)
+
+#### 2. Clone and build this repository
 
 ```bash
 # Clone the workspace
@@ -73,7 +77,9 @@ cd ~/isaacsim_vla_ws
 colcon build --packages-select vla_center --symlink-install
 ```
 
-As to the installation of VLA model, i.e. Lerobot SmolVLA, refer to [branch `camera/zmq_socket` of this forked repo from official lerobot repo](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket).
+#### 3. Install LeRobot for VLA model
+
+Refer to [branch `camera/zmq_socket` of this forked repo from official lerobot repo](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket) to the installation of VLA model, i.e. Lerobot SmolVLA.
 
 ## Usage
 
@@ -120,7 +126,7 @@ This quickly test the controller node of action graph for the robot arm model, b
 
 #### 2. Message exchange
 
-vla_center package offers 2 node for exchanging message between ROS2 topics from Isaac Sim and ZMQ sockets from VLA model side.
+vla_center package offers 2 nodes for exchanging message between ROS2 topics from Isaac Sim and ZMQ sockets from VLA model side.
 
 > **TODO**: use one launch file to start both nodes
 
@@ -172,7 +178,7 @@ python smolvla_zmq.py
 
 ## Open tasks
 
-For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Besides, the VLA model would be deployed on Jetson Orin Nano. Therefore the on-going open tasks of thie project include:
+For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Besides, the VLA model would be deployed on Jetson Orin Nano. Therefore the on-going open tasks of this project include:
 
 1. Build a pipeline to generate synthetic dataset which fits lerobot format
 
