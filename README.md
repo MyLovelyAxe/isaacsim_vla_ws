@@ -89,7 +89,7 @@ Refer to [branch `camera/zmq_socket` of this forked repo from official lerobot r
 > The `config/vla_so101_2cam.usd` for managing all robot, cameras and action graphs is based on a **local** reference of so100 robot. It refers to `config/Collected_so100` for the so100 prim, which is also included in this repo. You can also collect this Asset in Isaac Sim GUI, refer to [Isaac Sim instruction](https://docs.isaacsim.omniverse.nvidia.com/latest/assets/usd_assets_robots.html).
 
 
-**Terminal 1**: Start Isaac Sim GUI
+**Terminal 1**: Start Isaac Sim GUI (on host machine)
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -102,7 +102,8 @@ This starts Isaac Sim GUI with pre-defined USD for robot arm model SO100, includ
 > **Remember:**
 > Press **PLAY** button in Isaac Sim to start simulation!
 
-**[Optional] Terminal 2**: Test image topics 
+
+**[Optional] Terminal 2**: Test image topics (on host machine or Jetson)
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -112,7 +113,11 @@ source setup_systemros.sh
 
 This starts Rviz2 with pre-defined `.rviz` config, which visualizes images from image topics defined in Isaac Sim;
 
-**[Optional] Terminal 3**: Test robot arm controller
+> **Attention:**
+> To test whether the images from Isaac Sim on host machine can be recevied on Jetson Orin Nano, the same commands of terminal 2 also work. Run the above commands in a terminal on Jetson.
+
+
+**[Optional] Terminal 3**: Test robot arm controller (on host machine)
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
