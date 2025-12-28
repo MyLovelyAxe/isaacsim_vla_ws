@@ -1,6 +1,6 @@
-# isaacsim_vla_ws: ROS2 workspace for VLA model with Isaac Sim
+# isaacsim_vla_ws: ROS2 workspace for VLA model with Isaac Sim and Jetson Orin Nano
 
-This ROS2 workspace provides packages to implement message communication between Isaac Sim and VLA model, including images, current and target joint states of robot arm. It also contains some utility commands for Isaac Sim.
+This ROS2 workspace provides packages to implement message communication between Isaac Sim and VLA model (which can be deployed either on host machine or Jetson Orin Nano), including images, current and target joint states of robot arm. It also contains some utility commands for Isaac Sim.
 
 ![Description](media/isaacsim_vla_control_demo.gif)
 
@@ -18,10 +18,22 @@ This ROS2 workspace provides packages to implement message communication between
 
 This package is tested on the following environment configuration:
 
+On laptop or workstation:
+
 - Ubuntu22.04
 - [ROS2 humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 - System python 3.10
 - [Isaac Sim 5.1.0](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/index.html)
+- Anaconda3
+- RTX3080Ti with driver 575.57.08
+- CUDA version 12.9
+
+On Jetson Orin Nano:
+
+- Jetson Orin Nano [8GB developer kit version]
+- Jetpack 6.2.1
+- [ROS2 humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+- Docker
 
 ---
 
@@ -53,17 +65,21 @@ The following diagram describes how messages are exchanged between Isaac Sim and
 
 4. the **act ZMQ socket** receives the result action values for each joint of robot arm from VLA model, and sends them to topic `/joint_commmand`, as target state in Isaac Sim;
 
+> Attention:
+> The `vla_center` package and VLA model can be deployed on both the same host machine with Isaac Sim, or Jetson Orin Nano.
+
 ---
 
 ## Installation
 
-#### 1. Precondition
+Either deploy **VLA model** on the host machine (e.g. laptop or workstation) or Jetson Orin Nano, make sure [Isaac Sim GUI 5.1.0](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/index.html) is installed on the **host machine**.
 
-Please make sure the following setup is already done before installing this package:
+<details>
+<summary>If deploy VLA model on host machine:</summary>
 
-- [ROS2 humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html) installed in system environment on Ubuntu22
+#### 1. ROS2
 
-- [Isaac Sim GUI 5.1.0](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/index.html)
+Install **ROS2 humble** on host machine with Ubuntu22 in the system path, following ROS2 [official installation instruction](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html).
 
 #### 2. Clone and build this repository
 
@@ -79,17 +95,47 @@ colcon build --packages-select vla_center --symlink-install
 
 #### 3. Install LeRobot for VLA model
 
-Refer to [branch `camera/zmq_socket` of this forked repo from official lerobot repo](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket) to the installation of VLA model, i.e. Lerobot SmolVLA.
+Refer to the `README` of [branch `camera/zmq_socket` of this fork lerobot repository](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket), follow the installation steps of host machine.
+
+</details>
+
+<details>
+<summary>If deploy VLA model on Jetson Orin Nano:</summary>
+
+#### 1. ROS2
+
+Firstly, flash [Jetpack 6.2](https://www.jetson-ai-lab.com/tutorials/initial-setup-jetson-orin-nano/) on Jetson Orin Nano.
+
+Then, install **ROS2 humble** on Jetson Orin Nano with Jetson Linux in the system path (putside any docker containers), following ROS2 [official installation instruction](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html).
+
+#### 2. Clone and build this repository
+
+```bash
+# Clone the workspace
+cd
+git clone git@github.com:MyLovelyAxe/isaacsim_vla_ws.git
+
+# Build vla_center package
+cd ~/isaacsim_vla_ws
+colcon build --packages-select vla_center --symlink-install
+```
+
+#### 3. Install LeRobot for VLA model
+
+Refer to the `README` of [branch `camera/zmq_socket` of this fork lerobot repository](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket), follow the installation steps of Jetson Orin Nano.
+
+</details>
+
 
 ## Usage
 
-#### 1. Utility commands for Isaac Sim
+#### 1. Test Isaac Sim
 
 > **Attention:**
 > The `config/vla_so101_2cam.usd` for managing all robot, cameras and action graphs is based on a **local** reference of so100 robot. It refers to `config/Collected_so100` for the so100 prim, which is also included in this repo. You can also collect this Asset in Isaac Sim GUI, refer to [Isaac Sim instruction](https://docs.isaacsim.omniverse.nvidia.com/latest/assets/usd_assets_robots.html).
 
 
-**Terminal 1**: Start Isaac Sim GUI (on host machine)
+**Terminal 1**: Start Isaac Sim GUI (always on host machine)
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -103,7 +149,7 @@ This starts Isaac Sim GUI with pre-defined USD for robot arm model SO100, includ
 > Press **PLAY** button in Isaac Sim to start simulation!
 
 
-**[Optional] Terminal 2**: Test image topics (on host machine or Jetson)
+**Terminal 2**: Test image topics (on either host machine or Jetson)
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -113,11 +159,7 @@ source setup_systemros.sh
 
 This starts Rviz2 with pre-defined `.rviz` config, which visualizes images from image topics defined in Isaac Sim;
 
-> **Attention:**
-> To test whether the images from Isaac Sim on host machine can be recevied on Jetson Orin Nano, the same commands of terminal 2 also work. Run the above commands in a terminal on Jetson.
-
-
-**[Optional] Terminal 3**: Test robot arm controller (on host machine)
+**Terminal 3**: Test robot arm controller (on either host machine or Jetson)
 
 ```bash
 cd ~/isaacsim_vla_ws/bash
@@ -128,27 +170,22 @@ source setup_systemros.sh
 
 This quickly test the controller node of action graph for the robot arm model, by giving one-time target state or reset to initial state, which is specified for robot SO100;
 
-#### 2. Message exchange
+#### 2. Run VLA pipeline
 
-`vla_center` package offers 2 nodes for exchanging message between ROS2 topics from Isaac Sim and ZMQ sockets from VLA model side.
+**Terminal 1**: Start Isaac Sim
 
-> **TODO**: use one launch file to start both nodes
+Always start Isaac Sim GUI on the host machine, and press **PLAY** button to start simulation:
 
-1. Launch the nodes for observations and actions
+```bash
+cd ~/isaacsim_vla_ws/bash
+source setup_isaacsim.sh
+./start_isaac_sim.sh
+```
 
-The `vla_observation_sender_2cam_node` node subscribes to the following topics:
+<details>
+<summary>If run VLA model on the host machine:</summary>
 
-- `/camera1_img`: front-view camera image
-- `/camera2_img`: top-view camera image
-- `/joint_states`: current joint state of robot arm
-
-then publishes the packed message to a ZMQ socket (the VLA model subscribes to this socket for input).
-
-The `vla_action_receiver_node` node subscribes to the socket, to which VLA model returns action commands as target state, and publishs the target state to ROS2 topic:
-
-- `/joint_command`: target joint states for Isaac Sim controller node
-
-In a new terminal, launch both nodes by:
+**Terminal 2**: Start ROS2 nodes for message exchange (On host machine)
 
 ```bash
 cd ~/isaacsim_vla_ws/
@@ -157,11 +194,7 @@ source install/setup.bash
 ros2 launch vla_center send_obs_get_act.launch.py
 ```
 
-#### 2. Start VLA model
-
-The [forked Lerobot repo](https://github.com/MyLovelyAxe/lerobot/tree/camera/zmq_socket) provides a script which lets SmolVLA subscribe to observation and publish action commands to Isaac Sim topics via zmq socket, independent of the required robot hardware.
-
-Firstly make sure the forked lerobot repo is already setup. Then in another terminal, run this command to start SmolVLA:
+**Terminal 3**: Start VLA model (On host machine)
 
 ```bash
 conda activate smolvla
@@ -169,12 +202,38 @@ cd ~/lerobot/examples/tutorial/smolvla
 python smolvla_zmq.py
 ```
 
+</details>
+
+<details>
+<summary>If run VLA model on Jetson Orin Nano:</summary>
+
+**Terminal 2**: Start ROS2 nodes for message exchange
+
+On Jetson Orin Nano, in the host **outside** the container:
+
+```bash
+cd ~/isaacsim_vla_ws/
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 launch vla_center send_obs_get_act.launch.py
+```
+
+**Terminal 3**: Start VLA model
+
+On Jetson Orin Nano, **inside** the container:
+
+```bash
+docker start -ai smolvla_pytorch27_container
+cd /opt/lerobot/examples/tutorial/smolvla
+python smolvla_zmq.py
+```
+
+</details>
+
 ## Open tasks
 
-For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Besides, the VLA model would be deployed on Jetson Orin Nano. Therefore the on-going open tasks of this project include:
+For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Therefore the on-going open tasks of this project include:
 
 1. Build a pipeline to generate synthetic dataset which fits lerobot format
 
 2. Fine-tune SmolVLA for some manipulation tasks
-
-3. Deploy fine-tuned SmolVLA on Jetson Orin Nano
