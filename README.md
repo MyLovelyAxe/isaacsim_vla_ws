@@ -185,6 +185,8 @@ source setup_isaacsim.sh
 <details>
 <summary>If run VLA model on the host machine:</summary>
 
+</br>
+
 **Terminal 2**: Start ROS2 nodes for message exchange (On host machine)
 
 ```bash
@@ -206,6 +208,8 @@ python smolvla_zmq.py
 
 <details>
 <summary>If run VLA model on Jetson Orin Nano:</summary>
+
+</br>
 
 **Terminal 2**: Start ROS2 nodes for message exchange
 
