@@ -25,7 +25,7 @@ header:
 name:
   ['shoulder_pan','shoulder_lift','elbow_flex','wrist_flex','wrist_roll','gripper']
 position:
-  [ 0.0037, 1.7, -1.5, 0.9, -1.0, 0.0]
+  [ 0.0037, 1.7, -1.5, 0.9, -1.57, 0.0]
 " -1
 
 
