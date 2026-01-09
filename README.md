@@ -234,6 +234,35 @@ python smolvla_zmq.py
 
 </details>
 
+
+#### 3. Safety estimation
+
+Record trajectory as dataset to train the safety estimator:
+
+**Terminal 1**: start isaac sim
+**Terminal 2**: start smolvla
+**Terminal 3**: start recording node
+
+```bash
+cd ~/isaacsim_vla_ws/
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 launch vla_center record_trajectory.launch.py
+```
+
+Check the Isaac Sim window for the robot's behavior, manually stop the process when you think the recording is done.
+
+**Terminal 4**: replay a recorded trajectory (find the recored `.npy` under `~/isaacsim_vla_ws/record`)
+
+```bash
+cd ~/isaacsim_vla_ws/
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 launch vla_center replay_record.launch.py 'npy_name:=20260109_154629.npy'
+```
+
+Manually stop the process when the recording is finished replaying.
+
 ## Open tasks
 
 For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Therefore the on-going open tasks of this project include:
