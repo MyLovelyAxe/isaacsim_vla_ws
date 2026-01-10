@@ -101,6 +101,25 @@ class TrajectoryDataSet:
         """The number of batches based on batch size."""
         return int(len(self) / self.batch_size)
     
+    @property
+    def all_risk_labels(self) -> torch.Tensor:
+        """All the risk labels."""
+        all_risk_labels_lst = list()
+        for idx in range(len(self)):
+            _, _, risk_label = self[idx]
+            all_risk_labels_lst.append(risk_label)
+        return torch.Tensor(all_risk_labels_lst)
+
+    @property
+    def num_safe(self) -> int:
+        """Number of samples whose proposed action is labeled as safe, i.e. risk_label=0."""
+        return (self.all_risk_labels == 0.0).sum()
+
+    @property
+    def num_risk(self) -> int:
+        """Number of samples whose proposed action is labeled as risk, i.e. risk_label=1."""
+        return (self.all_risk_labels == 1.0).sum()
+
 
     def __post_init__(self):
         # specify the general starting and ending index of samples for each trajectory
@@ -360,7 +379,7 @@ class TrajectoryDataLoader:
     def test_npy_filenames(self) -> List[str]:
         """All filenames of .npy file without surffix of testing set."""
         return list(npy_file.name.split(".")[0] for npy_file in self.test_npy_files)
-    
+
 
     def __post_init__(self):
 

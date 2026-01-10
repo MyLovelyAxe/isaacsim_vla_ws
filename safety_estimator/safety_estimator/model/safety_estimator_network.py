@@ -108,32 +108,25 @@ class SafetyEstimatorNetwork(nn.Module):
         # prop_act shape: (batch_size, 6)
 
         # input: (batch_size, N, 12)
-        # output: (batch_size, N, encoded_dim)
+        # output: (batch_size, N, encoded_dim), type: torch.float32
         encoded_history = self.history_encoder(history)
-        print(f"encoded_history: shape ({encoded_history.shape})")
 
         # input: (batch_size, 6)
-        # output: (batch_size, encoded_dim)
+        # output: (batch_size, encoded_dim), type: torch.float32
         encoded_prop_act = self.prop_act_encoder(prop_act)
-        print(f"encoded_prop_act: shape ({encoded_prop_act.shape})")
 
-        # (batch_size, N, encoded_dim) -> (batch_size, N x encoded_dim)
+        # (batch_size, N, encoded_dim) -> (batch_size, N x encoded_dim), type: torch.float32
         flatten_encoded_history = encoded_history.reshape(-1, self.N * self.encoded_dim)
-        print(f"flatten_encoded_history: shape ({flatten_encoded_history.shape})")
 
-        # (batch_size, N x encoded_dim + encoded_dim)
+        # encoded_input: (batch_size, N x encoded_dim + encoded_dim), type: torch.float32
         encoded_input = torch.concat([
             flatten_encoded_history,
             encoded_prop_act,
         ], dim=1)
-        print(f"encoded_input: shape ({encoded_input.shape})")
 
-
-        # should have shape: (batch_size,)
+        # risk_score: shape: (batch_size, 1), type: torch.float32
         risk_score = self.estimator(encoded_input)
-        print(f"risk_score: shape ({risk_score.shape})")
 
-        # output shape: (batch_size,)
         return risk_score
 
 
@@ -147,4 +140,4 @@ if __name__ == "__main__":
     dummy_history = torch.rand([32, 10, 12])
     dummy_prop_act = torch.rand([32, 6])
     dummy_risk_score = network(dummy_history, dummy_prop_act)
-    print(f"dummy_risk_score: shape({dummy_risk_score.shape})")
+    print(f"dummy_risk_score: shape({dummy_risk_score.shape}, type: {dummy_risk_score.dtype})")
