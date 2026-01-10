@@ -3,18 +3,13 @@ import numpy as np
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Tuple, List, Dict, Optional
+from safety_estimator.utils.robot_config import (
+    SO100_JOINTS_LIMITS_RADIAN,
+)
 
 
 DEFAULT_DATASET_PATH = Path(__file__).parent.parent.parent.resolve() / "record"
 
-SO100_JOINTS_LIMITS_RADIAN = {
-    'shoulder_pan': {'min': -2.0, 'max': 2.0},
-    'shoulder_lift': {'min': 0.0, 'max': 3.5},
-    'elbow_flex': {'min': -3.142, 'max': 0.0},
-    'wrist_flex': {'min': -2.5, 'max': 1.2},
-    'wrist_roll': {'min': -3.142, 'max': 3.142},
-    'gripper': {'min': -0.2, 'max': 2.0},
-}
 SO100_JOINT_LIMIT_MIN = torch.tensor([v["min"] for v in SO100_JOINTS_LIMITS_RADIAN.values()], dtype=torch.float32)
 SO100_JOINT_LIMIT_MAX = torch.tensor([v["max"] for v in SO100_JOINTS_LIMITS_RADIAN.values()], dtype=torch.float32)
 
@@ -106,6 +101,7 @@ class TrajectoryDataSet:
         """The number of batches based on batch size."""
         return int(len(self) / self.batch_size)
     
+
     def __post_init__(self):
         # specify the general starting and ending index of samples for each trajectory
         indexing_num = 0
@@ -135,28 +131,39 @@ class TrajectoryDataSet:
             if idx >= trajectory.general_start_idx and idx < trajectory.general_end_idx:
                 # current timestamp t
                 curr_time = idx - trajectory.general_start_idx + self.N
-                # get history and future
+                # history
                 joint_states_history=trajectory.joint_states[curr_time-self.N: curr_time]
                 executed_actions_history=trajectory.executed_actions[curr_time-self.N: curr_time]
+                # proposed next action
+                prop_act = trajectory.executed_actions[curr_time]
+                # future
                 joint_states_future=trajectory.joint_states[curr_time+1: curr_time+self.M]
                 executed_actions_future=trajectory.executed_actions[curr_time+1: curr_time+self.M]
                 if self.examine_mode:
                     return (
-                        torch.concat([joint_states_history, executed_actions_history], dim=1),
-                        torch.concat([joint_states_future, executed_actions_future], dim=1),
+                        torch.concat([joint_states_history, executed_actions_history], dim=1), # shape (N, 12)
+                        prop_act, # shape (6,)
+                        torch.concat([joint_states_future, executed_actions_future], dim=1), # shape (M, 12)
                     )
                 else:
-                    # normalize the history
+                    # normalize the input of network
                     norm_history = self.normalize_history(
                         joint_states_history=joint_states_history,
                         executed_actions_history=executed_actions_history,
                     )
+                    norm_prop_act = self.normalize_prop_act(
+                        prop_act=prop_act,
+                    )
                     # compute risk score based on future
-                    risk_score = self.compute_risk_label(
+                    risk_label = self.compute_risk_label(
                         joint_states_future=joint_states_future,
                         executed_actions_future=executed_actions_future,
                     )
-                    return norm_history, risk_score
+                    return (
+                        norm_history, # shape (N, 12)
+                        norm_prop_act, # shape (6,)
+                        risk_label, # shape (1,)
+                    )
 
 
     def normalize_history(
@@ -164,10 +171,20 @@ class TrajectoryDataSet:
         joint_states_history: torch.Tensor, # shape (N, 6)
         executed_actions_history: torch.Tensor,# shape (N, 6)
     ) -> torch.Tensor: # shape (N, 12)
-        """Normalize sample with statistics."""
+        """Normalize history sample with statistics."""
+
         norm_joint_states_history = (joint_states_history - self.mean_q) / (self.std_q + self.eps)
         norm_executed_actions_history = (executed_actions_history - self.mean_a) / (self.std_a + self.eps)
         return torch.concat([norm_joint_states_history, norm_executed_actions_history], dim=1)
+
+
+    def normalize_prop_act(
+        self,
+        prop_act: torch.Tensor, # shape (6,)
+    ):
+        """Normalize proposed next action sample with statistics."""
+
+        return (prop_act - self.mean_a) / (self.std_a + self.eps)
 
 
     def compute_risk_label(
@@ -175,6 +192,8 @@ class TrajectoryDataSet:
         joint_states_future: torch.Tensor, # shape (M, 6)
         executed_actions_future: torch.Tensor, # shape (M, 6)
     ) -> torch.Tensor: # shape (1,)
+        """Compute risk label based on near future."""
+
         # TODO: check if this is correct
         limit_min = SO100_JOINT_LIMIT_MIN.to(
             device=joint_states_future.device, dtype=joint_states_future.dtype
@@ -190,33 +209,45 @@ class TrajectoryDataSet:
 
     def get_batch(self, batch_idx: int) -> torch.Tensor:
         """Create batch of samples for training."""
+
         assert batch_idx < self.batch_num, "required batch_idx exceeds number of all batches."
         norm_history_lst = list()
-        risk_score_lst = list()
+        norm_prop_act_lst = list()
+        risk_label_lst = list()
         for offset_sample_idx in range(self.batch_size):
             # norm_history: dim (history_len, feature_len), shape (N, 12)
-            # risk_score: scalar, shape (1,)
-            norm_history, risk_score = self[batch_idx * self.batch_size + offset_sample_idx]
+            # norm_prop_act: dim (joints_len), shape (6,)
+            # risk_label: scalar, shape (1,)
+            norm_history, norm_prop_act, risk_label = self[batch_idx * self.batch_size + offset_sample_idx]
             norm_history_lst.append(norm_history)
-            risk_score_lst.append(risk_score)
-        norm_history_batch = torch.stack(norm_history_lst, dim=0) # batch shape: (self.batch_size, N, 12)
-        risk_score_batch = torch.stack(risk_score_lst, dim=0) # batch shape: (self.batch_size, 1)
-        return norm_history_batch, risk_score_batch
+            norm_prop_act_lst.append(norm_prop_act)
+            risk_label_lst.append(risk_label)
+        norm_history_batch = torch.stack(norm_history_lst, dim=0) 
+        norm_prop_act_batch = torch.stack(norm_prop_act_lst, dim=0) 
+        risk_label_batch = torch.stack(risk_label_lst, dim=0) 
+        return (
+            norm_history_batch, # batch shape: (self.batch_size, N, 12)
+            norm_prop_act_batch, # batch shape: (self.batch_size, 6)
+            risk_label_batch, # batch shape: (self.batch_size, 1)
+        )
         
 
     def load_sample(self, sample_idx: int):
         """Directly load the sample from dataset."""
-        norm_history, risk_label = self[sample_idx]
+
+        norm_history, norm_prop_act, risk_label = self[sample_idx]
         print(f"norm_history.shape: {norm_history.shape}")
+        print(f"norm_prop_act.shape: {norm_prop_act.shape}")
         print(f"risk_label.shape: {risk_label.shape}")
         # only check the first 2 timestamps, and first 2 dim of both joint states and executed actions
         print(f"concatenated: part of joint states: {norm_history[0:2,0:2]}")
         print(f"concatenated: part of executed actions: {norm_history[0:2, 6:8]}")
-        return norm_history, risk_label
+        return norm_history
         
 
     def get_sub_sample(self, sample_idx: int):
         """Get the sample from its source trajectory."""
+
         for name, trajectory in self.trajectorys.items():
             if sample_idx >= trajectory.general_start_idx and sample_idx < trajectory.general_end_idx:
                 print(f"sub sample is from trajectory {name}")
@@ -232,9 +263,10 @@ class TrajectoryDataSet:
 
     def verify_sample(self, sample_idx: int):
         """Verify the sample directly loaded from dataset equals to the sub-sample in the specific trajectory."""
+        
         assert sample_idx < len(self), "sample_idx exceeds the length of dataset"
         assert self.examine_mode == True, "the dataset should be in examine mode to verify sample"
-        norm_history, _ = self.load_sample(sample_idx=sample_idx)
+        norm_history = self.load_sample(sample_idx=sample_idx)
         sub_q_part, sub_a_part = self.get_sub_sample(sample_idx=sample_idx)
         assert torch.any(norm_history[0:2,0:2] - sub_q_part < 0.001), "joint states are different"
         assert torch.any(norm_history[0:2,6:8] - sub_a_part < 0.001), "executed actions are different"
