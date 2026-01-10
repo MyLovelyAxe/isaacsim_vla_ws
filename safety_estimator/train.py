@@ -28,6 +28,12 @@ parser.add_argument(
     help='The horizon length of future of joint states Q and executed actions A, i.e. t, ..., t+M.',
 )
 parser.add_argument(
+    '--encoded_dim', 
+    type=int, 
+    default=16, 
+    help='the dimension of encoded input for both history and proposed action.',
+)
+parser.add_argument(
     '--train_set_ratio', 
     type=float, 
     default=0.8, 
@@ -105,12 +111,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    args.log_id = f"exp-{time}-N{args.history_len}-M{args.future_len}-E{args.train_epoch}-{uuid.uuid4()}"
+    args.log_id = f"exp-{time}-N{args.history_len}-M{args.future_len}-D{args.encoded_dim}-E{args.train_epoch}-{uuid.uuid4()}"
 
     exp = SafetyEsimatiorExp(
         dataset_path=Path("~/isaacsim_vla_ws/record").expanduser(),
         history_len=args.history_len,
         future_len=args.future_len,
+        encoded_dim=args.encoded_dim,
         train_set_ratio=args.train_set_ratio,
         valid_set_ratio=args.valid_set_ratio,
         test_set_ratio=args.test_set_ratio,

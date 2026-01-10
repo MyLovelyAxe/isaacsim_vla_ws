@@ -21,9 +21,11 @@ class SafetyEsimatiorExp:
     dataset_path: Path = DEFAULT_DATASET_PATH
     """The folder that contains the recorded trajectories."""
     history_len: int = 10
-    """The window length of history of joint states Q and executed actions A, i.e. t-N, ..., t"""
+    """The window length of history of joint states Q and executed actions A, i.e. t-N, ..., t."""
     future_len: int = 10
-    """The horizon length of future of joint states Q and executed actions A, i.e. t, ..., t+M"""
+    """The horizon length of future of joint states Q and executed actions A, i.e. t, ..., t+M."""
+    encoded_dim: int = 16
+    """the dimension of encoded input for both history and proposed action."""
     train_set_ratio: float = 0.8
     """Ratio of training set in the whole dataset"""
     valid_set_ratio: float = 0.1
@@ -111,6 +113,7 @@ class SafetyEsimatiorExp:
 
         return SafetyEstimatorNetwork(
             history_len=self.history_len,
+            encoded_dim=self.encoded_dim,
         )
 
 
