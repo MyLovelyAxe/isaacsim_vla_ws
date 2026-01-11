@@ -577,3 +577,21 @@ class TrajectoryDataLoader:
             print(f"std_a: {std_a}")
 
         return mean_q, std_q, mean_a, std_a
+
+
+
+if __name__ == "__main__":
+
+    dataloader = TrajectoryDataLoader(
+        dataset_path=Path("~/isaacsim_vla_ws/record").expanduser(),
+        history_len=10,
+        future_len=10,
+        train_set_ratio=0.8,
+        valid_set_ratio=0.1,
+        test_set_ratio=0.1,
+        batch_size=32,
+        examine_mode=False,
+        verbose=False,
+    )
+    print(f"There are {len(dataloader.all_npy_filenames)} trajectories in all dataset.")
+    print(dataloader.test_set.general_start_end_idx)

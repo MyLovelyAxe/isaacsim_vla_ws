@@ -106,7 +106,7 @@ parser.add_argument(
 parser.add_argument(
     '--load_model_pt', 
     type=Path, 
-    default="/home/hardli/isaacsim_vla_ws/safety_estimator/safety_estimator/checkpoints/exp-20260111_174059-N10-M10-D16-WL30-MST0.8-E20.pt",
+    default=Path("/home/hardli/isaacsim_vla_ws/safety_estimator/safety_estimator/checkpoints/exp-20260111_220710-N10-M10-D16-WL30-MST0.8-E20.pt"),
     help='The path of .pt of a pretrained model for testing.',
 )
 parser.add_argument(

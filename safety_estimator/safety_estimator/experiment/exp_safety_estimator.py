@@ -215,6 +215,11 @@ class SafetyEsimatiorExp:
                     model=self.model, 
                     epoch=epoch,
                     best_auc=best_auc,
+                    mean_q=self.train_set.mean_q,
+                    std_q=self.train_set.std_q,
+                    mean_a=self.train_set.mean_a,
+                    std_a=self.train_set.std_a,
+                    eps=self.train_set.eps,
                     output_path=self.output_path, 
                     log_id=self.log_id,
                 )
@@ -263,7 +268,7 @@ class SafetyEsimatiorExp:
 
 
     def test(self):
-        """Test a pretrained weights."""
+        """Test a pretrained weights on testing set."""
 
         self.model = load_model(
             model=self.model,  
