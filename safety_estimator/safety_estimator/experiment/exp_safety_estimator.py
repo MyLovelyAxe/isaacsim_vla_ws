@@ -307,6 +307,13 @@ class SafetyEsimatiorExp:
             .format(**test_metrics),flush=True,
         )
 
+        if self.log_process:
+            loaded_model_log_id = self.load_model_pt.name.replace(".pt", "")
+            log_epoch(
+                epoch_info=test_metrics, 
+                # store in the same json with training and validation log
+                log_path=self.output_path / f"{loaded_model_log_id}.json",
+            )
 
 if __name__ == "__main__":
 

@@ -99,8 +99,8 @@ parser.add_argument(
 parser.add_argument(
     '--test', 
     type=bool, 
-    # default=False,
-    default=True,
+    default=False,
+    # default=True,
     help='Whether test a pretrained model.',
 )
 parser.add_argument(
