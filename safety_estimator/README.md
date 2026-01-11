@@ -15,6 +15,13 @@ cd ~/isaacsim_vla_ws/safety_estimator
 python train.py
 ```
 
+testing
+
+```bash
+conda activate smolvla
+cd ~/isaacsim_vla_ws/safety_estimator
+python train.py --test
+```
 
 online inference
 
@@ -24,7 +31,7 @@ cd ~/isaacsim_vla_ws/safety_estimator
 python run_estimator.py
 ```
 
-problems to improve:
+Open questions:
 
 1. the dataset is not idealy synchronized, i.e. in the pair [Q(t), A(t)], Q(t) should be result from previous action A(t-1), not the current action A(t), since execution of target action needs time, but that would be extra work to deal with this, so be it for now
 

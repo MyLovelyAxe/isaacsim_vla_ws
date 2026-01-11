@@ -98,10 +98,15 @@ parser.add_argument(
 )
 parser.add_argument(
     '--test', 
-    type=bool, 
+    action="store_true",
     default=False,
-    # default=True,
-    help='Whether test a pretrained model.',
+    help='Whether test a pretrained model, e.g.: ' \
+    '$ python train.py --test   ->  args.test == True' \
+    '$ python train.py          ->  args.test == False' \
+    'i.e. store_true: if run in command line argument give, then True, not given, then False' \
+    'If click on run button in vscode, then default value is used to control,' \
+    'i.e. default=True, click on run button, then test mode,' \
+    'default=False, click on run button, then train mode,',
 )
 parser.add_argument(
     '--load_model_pt', 
@@ -111,20 +116,19 @@ parser.add_argument(
 )
 parser.add_argument(
     '--log_process', 
-    type=bool, 
-    default=True, 
+    action="store_true",
     help='Whether save the log process of training and validation into .json.',
 )
 parser.add_argument(
     '--examine_mode', 
-    type=bool, 
+    action="store_true",
     default=False, 
     help='In examine mode, the returned samples are not yet normalized.',
 )
 parser.add_argument(
     '--verbose', 
-    type=bool, 
-    default=False, 
+    action="store_true",
+    default=False,
     help='If True: log the process of creating dataloader.',
 )
 
