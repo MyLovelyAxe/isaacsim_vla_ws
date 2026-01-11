@@ -70,8 +70,8 @@ The following diagram describes how messages are exchanged between Isaac Sim and
 
 > **Note 2**:
 > The ZMQ sockets involved in this project:
-> tcp://127.0.0.1:5555: observation (images + joint states)
-> tcp://127.0.0.1:5556: action commands
+> tcp://127.0.0.1:5555: action commands from VLA
+> tcp://127.0.0.1:5556: observation (images + joint states) from Isaac Sim
 > tcp://127.0.0.1:5557: history (joint states + executed actions) for safety estimator
 > tcp://127.0.0.1:5558: signal to empty action queue of VLA
 
