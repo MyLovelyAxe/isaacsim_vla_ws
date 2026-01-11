@@ -39,7 +39,7 @@ On Jetson Orin Nano:
 
 ## About
 
-This workspace works for 2 aspects.
+This workspace works for 3 aspects:
 
 #### 1. Utility commands for Isaac Sim
 
@@ -64,6 +64,14 @@ The following diagram describes how messages are exchanged between Isaac Sim and
 3. the **obs ZMQ socket** sends the RGB images and current joint states to VLA model, i.e. [SmolVLA](git@github.com:MyLovelyAxe/lerobot.git);
 
 4. the **act ZMQ socket** receives the result action values for each joint of robot arm from VLA model, and sends them to topic `/joint_commmand`, as target state in Isaac Sim;
+
+#### 3. Safety estimation
+
+The VLA model this repository uses, i.e. [LeRobot SmolVLA](https://huggingface.co/blog/smolvla), generates an action chunk every time when it receives new observation. And only when the entire action chunk is returned, will it generate a new chunk. However, the chunk of actions based on the observation from one single timestamp might lead to noisy actions, accumulated execution error, and unsafe behavior within the chunk.
+
+This repository provides a neural network-based safety estimator, which estimates a risk score based on a short history to decide whether it is safe to take a new proposed action from VLA model. 
+
+The details about training and testing can be found under `~/isaacsim_vla_ws/safety_estimator`. 
 
 > **Note 1**:
 > The `vla_center` package and VLA model can be deployed on both the same host machine with Isaac Sim, or Jetson Orin Nano.
@@ -244,10 +252,9 @@ python smolvla_zmq.py
 
 #### 3. Safety estimation
 
-The following functions are for safety estimation, i.e. estimate a risk score based on history to decide whether it is safe to take a new proposed action from VLA model. The safety estimator is a neural network, whose details can be found under `~/isaacsim_vla_ws/safety_estimator`. 
+The following functions are for safety estimation, which also relies on Isaac Sim. So firstly start Isaac Sim in one terminal, then follow the steps for different usages. 
 
->**Note**: 
->The safety estimator for now only lives on host machine.
+For now, the safety estimatoronly only runs on host machine, not on Jetson Orin Nano
 
 **Terminal 1**: start isaac sim (always on host machine)
 
