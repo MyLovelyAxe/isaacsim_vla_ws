@@ -7,6 +7,7 @@ from safety_estimator.data.dataloader import (
     TrajectoryDataSet,
     DEFAULT_DATASET_PATH,
 )
+from safety_estimator.utils.metrics import compute_metrics
 from safety_estimator.model.safety_estimator_network import (
     SafetyEstimatorNetwork,
 )
@@ -153,14 +154,15 @@ class SafetyEsimatiorExp:
     def train(self):
 
         self.model.train()
-
         for epoch in range(self.train_epoch):
 
-            epoch_loss = 0.0
+            train_loss = 0.0
             for param_group in self.optimizer.param_groups:
                 current_lr = param_group['lr']
 
             for batch_idx in range(self.train_set.batch_num):
+
+                self.model.zero_grad()
 
                 history, prop_act, risk_label = self.train_set.get_batch(batch_idx)
                 history = history.to(self.device)
@@ -175,40 +177,100 @@ class SafetyEsimatiorExp:
                 
                 risk_score = self.model(history, prop_act)
                 loss = self.criterion(risk_score, risk_label)
-
-                # TODO: remove
-                # get a parameter to check if it is actually updated
-                # p0 = next(self.model.parameters())
-                # before = p0.data.flatten()[0].item()
-
-
-                self.model.zero_grad()
                 loss.backward()
-                epoch_loss += loss.item()
+                train_loss += loss.item()
                 _ = self.optimizer.step()
 
-
-                # TODO: remove
-                # after = p0.data.flatten()[0].item()
-                # print("param delta:", after - before)
-
-            epoch_loss = epoch_loss / self.train_set.batch_num
+            train_loss = train_loss / self.train_set.batch_num
             self.lr_schedulor.step()
 
-            print('training: ')
-            print(f'End of epoch {epoch}: current lr {current_lr:5.4f} | epoch_loss {epoch_loss:5.4f} ')
+            print(f"End of epoch {epoch}: ")
+            print(f"Train loss {train_loss:5.3f} | Current lr {current_lr:5.4f} |")
+
+            valid_metrics = self.validate()
+            print(
+                "Valid loss {valid_loss:5.3f} | "
+                "Valid F1: {f1:5.3f} | Valid Accuracy: {accuracy:5.3f} | "
+                "Valid Recall: {recall:5.3f} | Valid AUC: {auc:5.3f} |"
+                .format(**valid_metrics),flush=True,
+            )
+
+        test_metrics = self.test()
+        print(
+            "Test loss {test_loss:5.3f} | "
+            "Test F1: {f1:5.3f} | Test Accuracy: {accuracy:5.3f} | "
+            "Test Recall: {recall:5.3f} | Test AUC: {auc:5.3f} |"
+            .format(**test_metrics),flush=True,
+        )
 
 
     def validate(self):
 
-        # TODO:
         self.model.eval()
+        valid_loss = 0.0
+        risk_score_lst = list()
+        risk_label_lst = list()
+
+        for batch_idx in range(self.valid_set.batch_num):
+
+            history, prop_act, risk_label = self.valid_set.get_batch(batch_idx)
+            history = history.to(self.device)
+            prop_act = prop_act.to(self.device)
+            risk_label = risk_label.to(self.device) # shape (batch_size, 1)
+            
+            risk_score = self.model(history, prop_act) # shape (batch_size, 1)
+            loss = self.criterion(risk_score, risk_label)
+
+            valid_loss += loss.item()
+            risk_score_lst.append(risk_score)
+            risk_label_lst.append(risk_label)
+
+        valid_loss = valid_loss / self.valid_set.batch_num
+        all_risk_scores = torch.cat(risk_score_lst, axis=0)
+        all_risk_labels = torch.cat(risk_label_lst, axis=0)
+
+        valid_metrics = dict(valid_loss=valid_loss)
+        valid_metrics.update(compute_metrics(
+            risk_score=all_risk_scores.data.cpu().numpy(), 
+            risk_label=all_risk_labels.data.cpu().numpy(),
+        ))
+
+        return valid_metrics
 
 
     def test(self):
 
-        # TODO:
         self.model.eval()
+        test_loss = 0.0
+        risk_score_lst = list()
+        risk_label_lst = list()
+
+        for batch_idx in range(self.test_set.batch_num):
+
+            history, prop_act, risk_label = self.test_set.get_batch(batch_idx)
+            history = history.to(self.device)
+            prop_act = prop_act.to(self.device)
+            risk_label = risk_label.to(self.device) # shape (batch_size, 1)
+            
+            risk_score = self.model(history, prop_act) # shape (batch_size, 1)
+            loss = self.criterion(risk_score, risk_label)
+
+            test_loss += loss.item()
+            risk_score_lst.append(risk_score)
+            risk_label_lst.append(risk_label)
+
+        test_loss = test_loss / self.test_set.batch_num
+        all_risk_scores = torch.cat(risk_score_lst, axis=0)
+        all_risk_labels = torch.cat(risk_label_lst, axis=0)
+
+        test_metrics = dict(test_loss=test_loss)
+        test_metrics.update(compute_metrics(
+            risk_score=all_risk_scores.data.cpu().numpy(), 
+            risk_label=all_risk_labels.data.cpu().numpy(),
+        ))
+
+        return test_metrics
+
 
 if __name__ == "__main__":
 
