@@ -65,8 +65,15 @@ The following diagram describes how messages are exchanged between Isaac Sim and
 
 4. the **act ZMQ socket** receives the result action values for each joint of robot arm from VLA model, and sends them to topic `/joint_commmand`, as target state in Isaac Sim;
 
-> Attention:
+> **Note 1**:
 > The `vla_center` package and VLA model can be deployed on both the same host machine with Isaac Sim, or Jetson Orin Nano.
+
+> **Note 2**:
+> The ZMQ sockets involved in this project:
+> tcp://127.0.0.1:5555: observation (images + joint states)
+> tcp://127.0.0.1:5556: action commands
+> tcp://127.0.0.1:5557: history (joint states + executed actions) for safety estimator
+> tcp://127.0.0.1:5558: signal to empty action queue of VLA
 
 ---
 
@@ -237,10 +244,34 @@ python smolvla_zmq.py
 
 #### 3. Safety estimation
 
-Record trajectory as dataset to train the safety estimator:
+The following functions are for safety estimation, i.e. estimate a risk score based on history to decide whether it is safe to take a new proposed action from VLA model. The safety estimator is a neural network, whose details can be found under `~/isaacsim_vla_ws/safety_estimator`. 
 
-**Terminal 1**: start isaac sim
-**Terminal 2**: start smolvla
+>**Note**: 
+>The safety estimator for now only lives on host machine.
+
+**Terminal 1**: start isaac sim (always on host machine)
+
+```bash
+cd ~/isaacsim_vla_ws/bash
+source setup_isaacsim.sh
+./start_isaac_sim.sh
+```
+
+Pres **Play** button.
+
+<details>
+<summary>Func 1: Record trajectories as dataset to train the safety estimator</summary>
+
+</br>
+
+**Terminal 2**: Start VLA model (On host machine)
+
+```bash
+conda activate smolvla
+cd ~/lerobot/examples/tutorial/smolvla
+python smolvla_zmq.py
+```
+
 **Terminal 3**: start recording node
 
 ```bash
@@ -250,9 +281,16 @@ source install/setup.bash
 ros2 launch vla_center record_trajectory.launch.py
 ```
 
-Check the Isaac Sim window for the robot's behavior, manually stop the process when you think the recording is done.
+Check the Isaac Sim window for the robot's behavior, manually stop the process when you think the recording is done. The recorded `.npy` will be stored under `~/isaacsim_vla_ws/record`.
 
-**Terminal 4**: replay a recorded trajectory (find the recored `.npy` under `~/isaacsim_vla_ws/record`)
+</details>
+
+<details>
+<summary>Func 2: Replay a recorded trajectory</summary>
+
+</br>
+
+**Terminal 2**: select a recoreded `.npy` under `~/isaacsim_vla_ws/record`
 
 ```bash
 cd ~/isaacsim_vla_ws/
@@ -262,6 +300,15 @@ ros2 launch vla_center replay_record.launch.py 'npy_name:=20260109_154629.npy'
 ```
 
 Manually stop the process when the recording is finished replaying.
+
+</details>
+
+<details>
+<summary>Func 3: Online inference with trained safety estimator</summary>
+
+</br>
+
+</details>
 
 ## Open tasks
 
