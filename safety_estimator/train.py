@@ -1,4 +1,4 @@
-import uuid
+import os
 import torch
 import argparse
 from pathlib import Path
@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument(
     '--train_epoch', 
     type=int, 
-    default=50, 
+    default=20, 
     help='Number of epochs to train the network.',
 )
 parser.add_argument(
@@ -82,7 +82,7 @@ parser.add_argument(
 parser.add_argument(
     '--learning_rate', 
     type=float, 
-    default=1e-3, # 3e-4, 
+    default=1e-3,
     help='Learning rate for optimizer to update gradients.',
 )
 parser.add_argument(
@@ -95,6 +95,25 @@ parser.add_argument(
     '--log_id', 
     type=str, 
     help='Unique ID for one single experiment.',
+)
+parser.add_argument(
+    '--test', 
+    type=bool, 
+    # default=False,
+    default=True,
+    help='Whether test a pretrained model.',
+)
+parser.add_argument(
+    '--load_model_pt', 
+    type=Path, 
+    default="/home/hardli/isaacsim_vla_ws/safety_estimator/safety_estimator/checkpoints/exp-20260111_174059-N10-M10-D16-WL30-MST0.8-E20.pt",
+    help='The path of .pt of a pretrained model for testing.',
+)
+parser.add_argument(
+    '--log_process', 
+    type=bool, 
+    default=True, 
+    help='Whether save the log process of training and validation into .json.',
 )
 parser.add_argument(
     '--examine_mode', 
@@ -121,7 +140,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    args.log_id = f"exp-{time}-N{args.history_len}-M{args.future_len}-D{args.encoded_dim}-WL{args.warmup_len}-MST{args.motion_stuck_risk_thr}-E{args.train_epoch}-{uuid.uuid4()}"
+    args.log_id = f"exp-{time}-N{args.history_len}-M{args.future_len}-D{args.encoded_dim}-WL{args.warmup_len}-MST{args.motion_stuck_risk_thr}-E{args.train_epoch}"
 
     exp = SafetyEsimatiorExp(
         dataset_path=Path("~/isaacsim_vla_ws/record").expanduser(),
@@ -139,13 +158,27 @@ if __name__ == '__main__':
         learning_rate=args.learning_rate,
         output_path=args.output_path,
         log_id=args.log_id,
+        load_model_pt=args.load_model_pt,
+        log_process=args.log_process,
         examine_mode=args.examine_mode,
         verbose=args.verbose,
     )
 
-    before_train = datetime.now().timestamp()
-    print("===================Start=========================")
-    exp.train()
-    after_train = datetime.now().timestamp()
-    print(f'Training took {(after_train - before_train) / 60} minutes')
-    print("====================End==========================")
+    if args.test:
+
+        print("Test the pretrained model: ")
+        print(f"{args.load_model_pt}")
+        if os.path.exists(args.load_model_pt):
+            exp.test()
+        else:
+            print(f"The loaded .pt file doesn't exist.")
+
+    else:
+
+        print("Train a new model: ")
+        before_train = datetime.now().timestamp()
+        print("===================Start=========================")
+        exp.train()
+        after_train = datetime.now().timestamp()
+        print(f'Training took {(after_train - before_train) / 60} minutes')
+        print("====================End==========================")

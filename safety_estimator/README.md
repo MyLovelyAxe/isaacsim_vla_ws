@@ -37,3 +37,5 @@ problems to improve:
 5. risk rule 3, i.e. stuck, can detect stuck, but can't detect unreasonable proposed action. If the proposed action is messy but the robot arm can still follow without getting stuck, then it is still labeled as safe. Replay this one for example: 20260110_091746
 
 6. risk rule 3 for now can't distinguish whether the large change comes from warm-up or getting stuck. I just manually exculde the first 30 timestamps for warm-up, since it always happens but not fixed before 30 timestamps in every trajectory.
+
+7. risk rule 3 can't detect moveable obstacle, e.g. if robot arm touches the cube, moves it but doesn't pick it up, there might be slight large change for difference between Q and A, but also might be considered as safe as well.

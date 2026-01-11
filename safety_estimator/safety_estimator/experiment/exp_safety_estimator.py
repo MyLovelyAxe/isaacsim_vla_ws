@@ -15,6 +15,7 @@ from safety_estimator.model.safety_estimator_network import (
 from safety_estimator.utils.tools import (
     save_model,
     load_model,
+    log_epoch,
 )
 
 
@@ -57,6 +58,8 @@ class SafetyEsimatiorExp:
     """Unique ID for one single experiment."""
     load_model_pt: Optional[Path] = None
     """The path of .pt of a pretrained model for testing."""
+    log_process: bool = True
+    """Whether save the log process of training and validation into .json."""
     examine_mode: bool = False
     """In examine mode, the returned samples are not yet normalized."""
     verbose: bool = False
@@ -193,6 +196,7 @@ class SafetyEsimatiorExp:
             train_loss = train_loss / self.train_set.batch_num
             self.lr_schedulor.step()
 
+            epoch_info = {"epoch": epoch, "lr": current_lr, "Train loss": train_loss, }
             print(f"End of epoch {epoch}: ")
             print(f"Train loss {train_loss:5.3f} | Current lr {current_lr:5.4f} |")
 
@@ -203,6 +207,7 @@ class SafetyEsimatiorExp:
                 "Valid Recall: {recall:5.3f} | Valid AUC: {auc:5.3f} |"
                 .format(**valid_metrics),flush=True,
             )
+            epoch_info.update(valid_metrics)
 
             if valid_metrics["auc"] > best_auc:
                 best_auc = valid_metrics["auc"]
@@ -212,6 +217,12 @@ class SafetyEsimatiorExp:
                     best_auc=best_auc,
                     output_path=self.output_path, 
                     log_id=self.log_id,
+                )
+
+            if self.log_process:
+                log_epoch(
+                    epoch_info=epoch_info, 
+                    log_path=self.output_path / f"{self.log_id}.json",
                 )
 
 
