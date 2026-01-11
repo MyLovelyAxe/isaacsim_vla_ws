@@ -1,5 +1,6 @@
 import os
 import torch
+from typing import Optional
 from pathlib import Path
 from dataclasses import dataclass
 from safety_estimator.data.dataloader import (
@@ -11,6 +12,11 @@ from safety_estimator.utils.metrics import compute_metrics
 from safety_estimator.model.safety_estimator_network import (
     SafetyEstimatorNetwork,
 )
+from safety_estimator.utils.tools import (
+    save_model,
+    load_model,
+)
+
 
 DEFAULT_OUTPUT_PATH = Path(__file__).parent.parent.resolve() / "checkpoints"
 
@@ -49,6 +55,8 @@ class SafetyEsimatiorExp:
     """The path to store the trained checkpoints."""
     log_id: str = ""
     """Unique ID for one single experiment."""
+    load_model_pt: Optional[Path] = None
+    """The path of .pt of a pretrained model for testing."""
     examine_mode: bool = False
     """In examine mode, the returned samples are not yet normalized."""
     verbose: bool = False
@@ -154,6 +162,7 @@ class SafetyEsimatiorExp:
     def train(self):
 
         self.model.train()
+        best_auc = 0.0
         for epoch in range(self.train_epoch):
 
             train_loss = 0.0
@@ -195,13 +204,15 @@ class SafetyEsimatiorExp:
                 .format(**valid_metrics),flush=True,
             )
 
-        test_metrics = self.test()
-        print(
-            "Test loss {test_loss:5.3f} | "
-            "Test F1: {f1:5.3f} | Test Accuracy: {accuracy:5.3f} | "
-            "Test Recall: {recall:5.3f} | Test AUC: {auc:5.3f} |"
-            .format(**test_metrics),flush=True,
-        )
+            if valid_metrics["auc"] > best_auc:
+                best_auc = valid_metrics["auc"]
+                save_model(
+                    model=self.model, 
+                    epoch=epoch,
+                    best_auc=best_auc,
+                    output_path=self.output_path, 
+                    log_id=self.log_id,
+                )
 
 
     def validate(self):
@@ -211,65 +222,79 @@ class SafetyEsimatiorExp:
         risk_score_lst = list()
         risk_label_lst = list()
 
-        for batch_idx in range(self.valid_set.batch_num):
+        with torch.no_grad():
 
-            history, prop_act, risk_label = self.valid_set.get_batch(batch_idx)
-            history = history.to(self.device)
-            prop_act = prop_act.to(self.device)
-            risk_label = risk_label.to(self.device) # shape (batch_size, 1)
-            
-            risk_score = self.model(history, prop_act) # shape (batch_size, 1)
-            loss = self.criterion(risk_score, risk_label)
+            for batch_idx in range(self.valid_set.batch_num):
 
-            valid_loss += loss.item()
-            risk_score_lst.append(risk_score)
-            risk_label_lst.append(risk_label)
+                history, prop_act, risk_label = self.valid_set.get_batch(batch_idx)
+                history = history.to(self.device)
+                prop_act = prop_act.to(self.device)
+                risk_label = risk_label.to(self.device) # shape (batch_size, 1)
+                
+                risk_score = self.model(history, prop_act) # shape (batch_size, 1)
+                loss = self.criterion(risk_score, risk_label)
+
+                valid_loss += loss.item()
+                risk_score_lst.append(risk_score)
+                risk_label_lst.append(risk_label)
 
         valid_loss = valid_loss / self.valid_set.batch_num
-        all_risk_scores = torch.cat(risk_score_lst, axis=0)
-        all_risk_labels = torch.cat(risk_label_lst, axis=0)
+        all_risk_scores = torch.cat(risk_score_lst, dim=0)
+        all_risk_labels = torch.cat(risk_label_lst, dim=0)
 
         valid_metrics = dict(valid_loss=valid_loss)
         valid_metrics.update(compute_metrics(
-            risk_score=all_risk_scores.data.cpu().numpy(), 
-            risk_label=all_risk_labels.data.cpu().numpy(),
+            risk_score=all_risk_scores.detach().cpu().numpy(), 
+            risk_label=all_risk_labels.detach().cpu().numpy(),
         ))
 
         return valid_metrics
 
 
     def test(self):
+        """Test a pretrained weights."""
 
-        self.model.eval()
+        self.model = load_model(
+            model=self.model,  
+            device=self.device, 
+            load_model_pt=self.load_model_pt,
+        )
         test_loss = 0.0
         risk_score_lst = list()
         risk_label_lst = list()
 
-        for batch_idx in range(self.test_set.batch_num):
+        with torch.no_grad():
 
-            history, prop_act, risk_label = self.test_set.get_batch(batch_idx)
-            history = history.to(self.device)
-            prop_act = prop_act.to(self.device)
-            risk_label = risk_label.to(self.device) # shape (batch_size, 1)
-            
-            risk_score = self.model(history, prop_act) # shape (batch_size, 1)
-            loss = self.criterion(risk_score, risk_label)
+            for batch_idx in range(self.test_set.batch_num):
 
-            test_loss += loss.item()
-            risk_score_lst.append(risk_score)
-            risk_label_lst.append(risk_label)
+                history, prop_act, risk_label = self.test_set.get_batch(batch_idx)
+                history = history.to(self.device)
+                prop_act = prop_act.to(self.device)
+                risk_label = risk_label.to(self.device) # shape (batch_size, 1)
+                
+                risk_score = self.model(history, prop_act) # shape (batch_size, 1)
+                loss = self.criterion(risk_score, risk_label)
+
+                test_loss += loss.item()
+                risk_score_lst.append(risk_score)
+                risk_label_lst.append(risk_label)
 
         test_loss = test_loss / self.test_set.batch_num
-        all_risk_scores = torch.cat(risk_score_lst, axis=0)
-        all_risk_labels = torch.cat(risk_label_lst, axis=0)
+        all_risk_scores = torch.cat(risk_score_lst, dim=0)
+        all_risk_labels = torch.cat(risk_label_lst, dim=0)
 
         test_metrics = dict(test_loss=test_loss)
         test_metrics.update(compute_metrics(
-            risk_score=all_risk_scores.data.cpu().numpy(), 
-            risk_label=all_risk_labels.data.cpu().numpy(),
+            risk_score=all_risk_scores.detach().cpu().numpy(), 
+            risk_label=all_risk_labels.detach().cpu().numpy(),
         ))
 
-        return test_metrics
+        print(
+            "Test loss {test_loss:5.3f} | "
+            "Test F1: {f1:5.3f} | Test Accuracy: {accuracy:5.3f} | "
+            "Test Recall: {recall:5.3f} | Test AUC: {auc:5.3f} |"
+            .format(**test_metrics),flush=True,
+        )
 
 
 if __name__ == "__main__":

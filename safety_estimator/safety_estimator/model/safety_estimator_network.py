@@ -49,15 +49,16 @@ class SafetyEstimatorNetwork(nn.Module):
         self.estimator = nn.Sequential(
             nn.Linear(
                 in_features=self.N*self.encoded_dim+self.encoded_dim,
-                out_features=128,
+                out_features=256,
             ),
             nn.ReLU(),
-            nn.Linear(in_features=128, out_features=256),
-            nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Linear(in_features=256, out_features=64),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Linear(in_features=64, out_features=16),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Linear(in_features=16, out_features=1),
         )
 

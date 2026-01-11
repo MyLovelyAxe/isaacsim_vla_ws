@@ -175,8 +175,8 @@ class TrajectoryDataSet:
                 # proposed next action
                 prop_act = trajectory.executed_actions[curr_time]
                 # future
-                joint_states_future=trajectory.joint_states[curr_time+1: curr_time+self.M]
-                executed_actions_future=trajectory.executed_actions[curr_time+1: curr_time+self.M]
+                joint_states_future=trajectory.joint_states[curr_time+1: curr_time+self.M+1]
+                executed_actions_future=trajectory.executed_actions[curr_time+1: curr_time+self.M+1]
                 if self.examine_mode:
                     return (
                         torch.concat([joint_states_history, executed_actions_history], dim=1), # shape (N, 12)
