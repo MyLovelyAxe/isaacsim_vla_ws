@@ -34,6 +34,10 @@ class SafetyEsimatiorExp:
     """Ratio of testing set in the whole dataset"""
     batch_size: int = 32
     """Number of samples for one single batch."""
+    warmup_len: int = 30 # TODO: this is a temporary compromise, remove it later
+    """The number of timestamp at beginning of each trajectory to warm-up, difference beween Q and A is large but still considered as safe."""
+    motion_stuck_risk_thr: float = 0.8
+    """Threshold for determining risk label based on motion stuck."""
     train_epoch: int = 50
     """Number of epochs to train the network."""
     device_choice: str = "cuda:0"
@@ -74,7 +78,7 @@ class SafetyEsimatiorExp:
         self.model = self.create_model().to(self.device)
         self.criterion = self.create_loss().to(self.device)
         self.optimizer = self.create_optimizer()
-        # self.lr_schedulor = self.create_lr_schedulor()
+        self.lr_schedulor = self.create_lr_schedulor()
 
 
     def select_device(self):
@@ -103,6 +107,8 @@ class SafetyEsimatiorExp:
             valid_set_ratio=self.valid_set_ratio,
             test_set_ratio=self.test_set_ratio,
             batch_size=self.batch_size,
+            warmup_len=self.warmup_len,
+            motion_stuck_risk_thr=self.motion_stuck_risk_thr,
             examine_mode=self.examine_mode,
             verbose=self.verbose,
         )
@@ -187,7 +193,7 @@ class SafetyEsimatiorExp:
                 # print("param delta:", after - before)
 
             epoch_loss = epoch_loss / self.train_set.batch_num
-            # self.lr_schedulor.step()
+            self.lr_schedulor.step()
 
             print('training: ')
             print(f'End of epoch {epoch}: current lr {current_lr:5.4f} | epoch_loss {epoch_loss:5.4f} ')

@@ -33,3 +33,7 @@ problems to improve:
 3. dataset splits only trajectories now, not the timetamps. If the number of .npy trajectories is less than 10, valid or test set might be empty.
 
 4. whether exploring where to reach the object should be considered as unsafe, or it is only safe under a tolerance of exploration, e.g. explore for 20 timestamps, if still doesn't get the right path, then should be unsafe
+
+5. risk rule 3, i.e. stuck, can detect stuck, but can't detect unreasonable proposed action. If the proposed action is messy but the robot arm can still follow without getting stuck, then it is still labeled as safe. Replay this one for example: 20260110_091746
+
+6. risk rule 3 for now can't distinguish whether the large change comes from warm-up or getting stuck. I just manually exculde the first 30 timestamps for warm-up, since it always happens but not fixed before 30 timestamps in every trajectory.

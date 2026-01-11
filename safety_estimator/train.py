@@ -1,10 +1,8 @@
-import os
 import uuid
 import torch
 import argparse
 from pathlib import Path
 from datetime import datetime
-from safety_estimator.data.dataloader import TrajectoryDataLoader
 from safety_estimator.experiment.exp_safety_estimator import SafetyEsimatiorExp
 
 parser = argparse.ArgumentParser(description='Safety estimator')
@@ -58,9 +56,21 @@ parser.add_argument(
     help='Number of samples for one single batch.',
 )
 parser.add_argument(
+    '--warmup_len', 
+    type=int, 
+    default=30, 
+    help='The number of timestamp at beginning of each trajectory to warm-up, difference beween Q and A is large but still considered as safe.',
+)
+parser.add_argument(
+    '--motion_stuck_risk_thr', 
+    type=float, 
+    default=0.8, 
+    help='Threshold for determining risk label based on motion stuck.',
+)
+parser.add_argument(
     '--train_epoch', 
     type=int, 
-    default=20, 
+    default=50, 
     help='Number of epochs to train the network.',
 )
 parser.add_argument(
@@ -72,7 +82,7 @@ parser.add_argument(
 parser.add_argument(
     '--learning_rate', 
     type=float, 
-    default=3e-4, 
+    default=1e-3, # 3e-4, 
     help='Learning rate for optimizer to update gradients.',
 )
 parser.add_argument(
@@ -111,7 +121,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    args.log_id = f"exp-{time}-N{args.history_len}-M{args.future_len}-D{args.encoded_dim}-E{args.train_epoch}-{uuid.uuid4()}"
+    args.log_id = f"exp-{time}-N{args.history_len}-M{args.future_len}-D{args.encoded_dim}-WL{args.warmup_len}-MST{args.motion_stuck_risk_thr}-E{args.train_epoch}-{uuid.uuid4()}"
 
     exp = SafetyEsimatiorExp(
         dataset_path=Path("~/isaacsim_vla_ws/record").expanduser(),
@@ -122,6 +132,8 @@ if __name__ == '__main__':
         valid_set_ratio=args.valid_set_ratio,
         test_set_ratio=args.test_set_ratio,
         batch_size=args.batch_size,
+        warmup_len=args.warmup_len,
+        motion_stuck_risk_thr=args.motion_stuck_risk_thr,
         train_epoch=args.train_epoch,
         device_choice=args.device_choice,
         learning_rate=args.learning_rate,
@@ -132,8 +144,8 @@ if __name__ == '__main__':
     )
 
     before_train = datetime.now().timestamp()
-    print("===================Normal-Start=========================")
+    print("===================Start=========================")
     exp.train()
     after_train = datetime.now().timestamp()
     print(f'Training took {(after_train - before_train) / 60} minutes')
-    print("===================Normal-End=========================")
+    print("====================End==========================")

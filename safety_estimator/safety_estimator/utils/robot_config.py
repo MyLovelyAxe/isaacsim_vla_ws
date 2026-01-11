@@ -11,3 +11,11 @@ SO100_JOINTS_LIMITS_RADIAN = {
     'wrist_roll': {'min': -3.142, 'max': 3.142},
     'gripper': {'min': -0.2, 'max': 2.0},
 }
+
+SO100_JOINTS_NAMES = list(SO100_JOINTS_LIMITS_RADIAN.keys())
+
+SO100_JOINT_LIMIT_MIN = [v["min"] for v in SO100_JOINTS_LIMITS_RADIAN.values()]
+
+SO100_JOINT_LIMIT_MAX = [v["max"] for v in SO100_JOINTS_LIMITS_RADIAN.values()]
+
+SO100_JOINT_LIMIT_RANGE = [v["max"]-v["min"] for v in SO100_JOINTS_LIMITS_RADIAN.values()]

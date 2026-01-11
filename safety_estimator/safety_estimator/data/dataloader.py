@@ -1,17 +1,22 @@
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Tuple, List, Dict, Optional
-from safety_estimator.utils.robot_config import (
-    SO100_JOINTS_LIMITS_RADIAN,
+from safety_estimator.utils.safety_rules import (
+    joint_range_limit,
+    velocity_limit,
+    motion_stuck,
+    DT,
 )
-
+from safety_estimator.utils.robot_config import (
+    SO100_JOINT_LIMIT_RANGE, 
+    SO100_JOINTS_NAMES,
+)
 
 DEFAULT_DATASET_PATH = Path(__file__).parent.parent.parent.resolve() / "record"
 
-SO100_JOINT_LIMIT_MIN = torch.tensor([v["min"] for v in SO100_JOINTS_LIMITS_RADIAN.values()], dtype=torch.float32)
-SO100_JOINT_LIMIT_MAX = torch.tensor([v["max"] for v in SO100_JOINTS_LIMITS_RADIAN.values()], dtype=torch.float32)
 
 
 @dataclass
@@ -43,7 +48,7 @@ class Trajectory:
 class TrajectoryDataSet:
     """Dataset consisting of trajectories with training data statistics."""
 
-    trajectorys: Dict[str, Trajectory]
+    trajectories: Dict[str, Trajectory]
     """All trajectories under this dataset."""
     mean_q: Optional[torch.Tensor] = None
     """Mean of joint states of entire trajectory training set, shape (6,)"""
@@ -61,6 +66,10 @@ class TrajectoryDataSet:
     """The horizon length of future of joint states Q and executed actions A, i.e. t, ..., t+M"""
     batch_size: int = 32
     """Number of samples for one single batch."""
+    warmup_len: int = 30 # TODO: this is a temporary compromise, remove it later
+    """The number of timestamp at beginning of each trajectory to warm-up, difference beween Q and A is large but still considered as safe."""
+    motion_stuck_risk_thr: float = 0.8
+    """Threshold for determining risk label based on motion stuck."""
     examine_mode: bool = False
     """In examine mode, the returned samples are not yet normalized."""
 
@@ -83,13 +92,13 @@ class TrajectoryDataSet:
     @property
     def all_trajectory_names(self) -> List[str]:
         """The labels of all trajectory, i.e. the npy filenames"""
-        return list(self.trajectorys.keys())
+        return list(self.trajectories.keys())
     
     @property
     def general_start_end_idx(self) -> List[str]:
         """A look up table of general starting and ending index of all trajectories."""
         lut = dict()
-        for name, trajectory in self.trajectorys.items():
+        for name, trajectory in self.trajectories.items():
             lut[name] = {
                 "start": trajectory.general_start_idx,
                 "end": trajectory.general_end_idx,
@@ -101,6 +110,16 @@ class TrajectoryDataSet:
         """The number of batches based on batch size."""
         return int(len(self) / self.batch_size)
     
+    @property
+    def joint_states_vel_limit(self) -> int:
+        """The 99% percentile of velocities of joint states."""
+        all_joint_states_lst = list()
+        for _, trajectory in self.trajectories.items():
+            all_joint_states_lst.append(trajectory.joint_states) # shape (T, 6)
+        all_joint_states = torch.concatenate(all_joint_states_lst, dim=0) 
+        velocity = (all_joint_states[1:] - all_joint_states[:-1]) / DT
+        return torch.quantile(velocity.abs(), 0.99, dim=0)
+
     @property
     def all_risk_labels(self) -> torch.Tensor:
         """All the risk labels."""
@@ -124,7 +143,7 @@ class TrajectoryDataSet:
     def __post_init__(self):
         # specify the general starting and ending index of samples for each trajectory
         indexing_num = 0
-        for _, trajectory in self.trajectorys.items():
+        for _, trajectory in self.trajectories.items():
             # how many samples does this trajectory offer
             sample_num = len(trajectory) - self.window + 1
             trajectory.sample_num = sample_num
@@ -137,7 +156,7 @@ class TrajectoryDataSet:
         """Length of dataset, i.e. number of all samples"""
 
         num_sample = 0
-        for _, trajectory in self.trajectorys.items():
+        for _, trajectory in self.trajectories.items():
             num_sample += trajectory.sample_num
         return num_sample
 
@@ -145,10 +164,10 @@ class TrajectoryDataSet:
     def __getitem__(self, idx):
         """Get one windowlized sample from this dataset."""
 
-        for _, trajectory in self.trajectorys.items():
+        for _, trajectory in self.trajectories.items():
             # if a general sample idx falls in the range of a specific trajectory
             if idx >= trajectory.general_start_idx and idx < trajectory.general_end_idx:
-                # current timestamp t
+                # current timestamp t inside the current trajectory
                 curr_time = idx - trajectory.general_start_idx + self.N
                 # history
                 joint_states_history=trajectory.joint_states[curr_time-self.N: curr_time]
@@ -174,9 +193,17 @@ class TrajectoryDataSet:
                         prop_act=prop_act,
                     )
                     # compute risk score based on future
+                    # PS: most of trajectories have warm-up stage for around 30 timestamps
+                    # PS: where the differnce between Q and A is also large, but safe, 
+                    # PS: so skip all sample window covering these areas for checking stuck
+                    if curr_time > self.warmup_len + self.N:
+                        check_stuck = True
+                    else:
+                        check_stuck = False
                     risk_label = self.compute_risk_label(
                         joint_states_future=joint_states_future,
                         executed_actions_future=executed_actions_future,
+                        check_stuck=check_stuck,
                     )
                     return (
                         norm_history, # shape (N, 12)
@@ -210,20 +237,35 @@ class TrajectoryDataSet:
         self, 
         joint_states_future: torch.Tensor, # shape (M, 6)
         executed_actions_future: torch.Tensor, # shape (M, 6)
+        check_stuck: bool = True,
     ) -> torch.Tensor: # shape (1,)
-        """Compute risk label based on near future."""
+        """Compute risk label based on near future.
+        
+        :param joint_states_future: joint states in near-future window, shape (M, 6)
+        :param vel_thr: the threshold of velocity for each joint, shape (6,)
+        :param check_stuck: whether apply risk rule for checking if getting stuck
+        """
 
-        # TODO: check if this is correct
-        limit_min = SO100_JOINT_LIMIT_MIN.to(
-            device=joint_states_future.device, dtype=joint_states_future.dtype
+        risk_label_1 = joint_range_limit(joint_states_future=joint_states_future)
+        risk_label_2 = velocity_limit(
+            joint_states_future=joint_states_future,
+            # 99% percentile of velocity magnitude, remove unusually large velocities
+            vel_thr=self.joint_states_vel_limit, 
         )
-        limit_max = SO100_JOINT_LIMIT_MAX.to(
-            device=joint_states_future.device, dtype=joint_states_future.dtype
-        )
-        state_violation = (joint_states_future < limit_min) | (joint_states_future > limit_max)
-        action_violation = (executed_actions_future < limit_min) | (executed_actions_future > limit_max)
-        risk = (state_violation | action_violation).any()
-        return risk.float().unsqueeze(0)
+        if check_stuck:
+            risk_label_3 = motion_stuck(
+                joint_states_future=joint_states_future,
+                executed_actions_future=executed_actions_future,
+                risk_thr=self.motion_stuck_risk_thr,
+            )
+        else:
+            risk_label_3 = 0.0 # safe by default
+
+        # any of risk label as 1 makes it unsafe
+        if risk_label_1 == 1.0 or risk_label_2 == 1.0 or risk_label_3 == 1.0:
+            return torch.tensor([1.0], dtype=joint_states_future.dtype)
+        else:
+            return torch.tensor([0.0], dtype=joint_states_future.dtype)
 
 
     def get_batch(self, batch_idx: int) -> torch.Tensor:
@@ -267,7 +309,7 @@ class TrajectoryDataSet:
     def get_sub_sample(self, sample_idx: int):
         """Get the sample from its source trajectory."""
 
-        for name, trajectory in self.trajectorys.items():
+        for name, trajectory in self.trajectories.items():
             if sample_idx >= trajectory.general_start_idx and sample_idx < trajectory.general_end_idx:
                 print(f"sub sample is from trajectory {name}")
                 subsample_idx = sample_idx - trajectory.general_start_idx
@@ -290,6 +332,38 @@ class TrajectoryDataSet:
         assert torch.any(norm_history[0:2,0:2] - sub_q_part < 0.001), "joint states are different"
         assert torch.any(norm_history[0:2,6:8] - sub_a_part < 0.001), "executed actions are different"
 
+
+    def visualize_qa_error(self, trajectory_name: str):
+        """Visualize the error between joint states and executed actions."""
+
+        trajectory = self.trajectories[trajectory_name]
+        diff = trajectory.joint_states - trajectory.executed_actions
+
+        row_num = (len(SO100_JOINTS_NAMES) + 1)
+        colors = ["steelblue", "orange", "green", "dimgrey", "purple", "brown"]
+        fig = plt.figure(figsize=(10, 4 * row_num))
+        axes = []
+
+        # all joints
+        ax_all = fig.add_subplot(row_num, 1, 1)
+        for joint_idx in range(diff.shape[1]):
+            ax_all.plot(diff[:,joint_idx], c=colors[joint_idx], label=SO100_JOINTS_NAMES[joint_idx])
+        plt.legend()
+        axes.append(ax_all)
+
+        # individual joint
+        for joint_idx in range(len(SO100_JOINTS_NAMES)):
+            ax = fig.add_subplot(row_num, 1, joint_idx+2)  # 7 rows, 1 column, position i
+            ax.plot(diff[:,joint_idx], c=colors[joint_idx], label=SO100_JOINTS_NAMES[joint_idx])
+            ax.hlines(y=SO100_JOINT_LIMIT_RANGE[joint_idx] * 0.1, xmin=0, xmax=len(diff), color="red")
+            ax.hlines(y=-SO100_JOINT_LIMIT_RANGE[joint_idx] * 0.1, xmin=0, xmax=len(diff), color="red")
+            plt.legend()
+            axes.append(ax)
+
+        axes[-1].set_xlabel("Timestamp")
+        axes[0].set_title("Error between joint states and executed actions")
+        plt.tight_layout()
+        plt.show()
 
 
 @dataclass
@@ -324,6 +398,10 @@ class TrajectoryDataLoader:
     """Ratio of testing set in the whole dataset"""
     batch_size: int = 32
     """Number of samples for one single batch."""
+    warmup_len: int = 30 # TODO: this is a temporary compromise, remove it later
+    """The number of timestamp at beginning of each trajectory to warm-up, difference beween Q and A is large but still considered as safe."""
+    motion_stuck_risk_thr: float = 0.8
+    """Threshold for determining risk label based on motion stuck."""
     examine_mode: bool = False
     """In examine mode, the returned samples are not yet normalized."""
     verbose: bool = False
@@ -424,7 +502,7 @@ class TrajectoryDataLoader:
 
         # create datasets
         self.train_set = TrajectoryDataSet(
-            trajectorys=train_trajectories, 
+            trajectories=train_trajectories, 
             mean_q=self.mean_q,
             std_q=self.std_q,
             mean_a=self.mean_a,
@@ -432,10 +510,12 @@ class TrajectoryDataLoader:
             history_len=self.N,
             future_len=self.M,
             batch_size=self.batch_size,
+            warmup_len=self.warmup_len,
+            motion_stuck_risk_thr=self.motion_stuck_risk_thr,
             examine_mode=self.examine_mode,
         )
         self.valid_set = TrajectoryDataSet(
-            trajectorys=valid_trajectories, 
+            trajectories=valid_trajectories, 
             mean_q=self.mean_q,
             std_q=self.std_q,
             mean_a=self.mean_a,
@@ -443,10 +523,12 @@ class TrajectoryDataLoader:
             history_len=self.N,
             future_len=self.M,
             batch_size=self.batch_size,
+            warmup_len=self.warmup_len,
+            motion_stuck_risk_thr=self.motion_stuck_risk_thr,
             examine_mode=self.examine_mode,
         )
         self.test_set = TrajectoryDataSet(
-            trajectorys=test_trajectories, 
+            trajectories=test_trajectories, 
             mean_q=self.mean_q,
             std_q=self.std_q,
             mean_a=self.mean_a,
@@ -454,6 +536,8 @@ class TrajectoryDataLoader:
             history_len=self.N,
             future_len=self.M,
             batch_size=self.batch_size,
+            warmup_len=self.warmup_len,
+            motion_stuck_risk_thr=self.motion_stuck_risk_thr,
             examine_mode=self.examine_mode,
         )
 
