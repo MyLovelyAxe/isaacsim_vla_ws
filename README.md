@@ -297,7 +297,15 @@ Check the Isaac Sim window for the robot's behavior, manually stop the process w
 
 </br>
 
-**Terminal 2**: select a recoreded `.npy` under `~/isaacsim_vla_ws/record`
+**Terminal 2**: Start safety estimator
+
+```bash
+conda activate smolvla
+cd ~/isaacsim_vla_ws/safety_estimator
+python run_safety_estimator.py
+```
+
+**Terminal 3**: Select a recoreded `.npy` under `~/isaacsim_vla_ws/record`
 
 ```bash
 cd ~/isaacsim_vla_ws/
@@ -307,6 +315,7 @@ ros2 launch vla_center replay_record.launch.py 'npy_name:=20260109_154629.npy'
 ```
 
 Manually stop the process when the recording is finished replaying.
+
 
 </details>
 
