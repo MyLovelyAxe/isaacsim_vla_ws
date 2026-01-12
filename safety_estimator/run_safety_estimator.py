@@ -8,6 +8,7 @@ import time
 import torch
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 from pathlib import Path
 from collections import deque
 from safety_estimator.utils.tools import (
@@ -37,6 +38,57 @@ parser.add_argument(
     help='The device choice for training or inference, i.e. cpu or gpu.',
 )
 
+
+#### source of history input ###
+
+history_context = zmq.Context()
+history_socket = history_context.socket(zmq.SUB)
+history_socket.connect(INPUT_HISTORY_SOCKET)
+history_socket.setsockopt(zmq.SUBSCRIBE, b"")
+
+
+### signal for emtpy VLA action chunk ###
+
+risk_label_buffer = deque(maxlen=10)
+signal_context = zmq.Context()
+signal_socket = signal_context.socket(zmq.PUB)
+signal_socket.bind(EMPTY_SIGNAL_SOCKET)
+
+
+### online risk score indicator ###
+
+plt.ion()  # interactive mode ON
+fig, ax = plt.subplots(figsize=(1, 6))
+bar = ax.bar([0], [0.0], width=0.2)[0]
+ax.axhline(0.5, color="black", linestyle="--", linewidth=2) # threshold
+ax.set_ylim(0.0, 1.0)
+ax.set_title("Safety Estimator", fontsize=20)
+plt.show()
+
+def risk_to_color(risk: float):
+    """Update the color of the safety estimator bar."""
+
+    if risk < 0.4:
+        return "green"
+    elif risk < 0.7:
+        return "orange"
+    else:
+        return "red"
+
+
+def update_risk_bar(risk_value):
+    """
+    risk_value: float in [0, 1]
+    """
+    bar.set_height(risk_value)
+    bar.set_color(risk_to_color(risk_value))
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+
+update_risk_bar(0.0) # warm-up
+
+
+time.sleep(2) # give subscribers a short time to connect
 
 if __name__ == '__main__':
 
@@ -75,19 +127,6 @@ if __name__ == '__main__':
         device=torch.device("cpu"), # normalize input on cpu first, then infer on gpu
     )
 
-    # source of history
-    history_context = zmq.Context()
-    history_socket = history_context.socket(zmq.SUB)
-    history_socket.connect(INPUT_HISTORY_SOCKET)
-    history_socket.setsockopt(zmq.SUBSCRIBE, b"")
-
-    # signal for emtpy VLA action chunk
-    risk_label_buffer = deque(maxlen=10)
-    signal_context = zmq.Context()
-    signal_socket = signal_context.socket(zmq.PUB)
-    signal_socket.bind(EMPTY_SIGNAL_SOCKET)
-
-    time.sleep(0.5) # give subscribers a short time to connect
 
     while True:
 
@@ -129,6 +168,8 @@ if __name__ == '__main__':
         # add risk label into buffer
         risk_label_buffer.append(risk_label)
         print(f"risk prob: {risk_prob}, risk label: {risk_label}")
+        # visualize the risk score as a bar
+        update_risk_bar(float(risk_prob[0]))
 
         ### Signal for VLA: empty action chunk or not ###
 
