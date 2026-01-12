@@ -62,7 +62,7 @@ fig, ax = plt.subplots(figsize=(1, 6))
 bar = ax.bar([0], [0.0], width=0.2)[0]
 ax.axhline(0.5, color="black", linestyle="--", linewidth=2) # threshold
 ax.set_ylim(0.0, 1.0)
-ax.set_title("Safety Estimator", fontsize=20)
+ax.set_title("Risk Score", fontsize=20)
 plt.show()
 
 def risk_to_color(risk: float):

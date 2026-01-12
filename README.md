@@ -2,7 +2,7 @@
 
 This ROS2 workspace provides packages to implement message communication between Isaac Sim and VLA model (which can be deployed either on host machine or Jetson Orin Nano), including images, current and target joint states of robot arm. It also contains some utility commands for Isaac Sim.
 
-![Description](media/isaacsim_vla_control_demo.gif)
+![Description](media/safety_estimator_live_demo.gif)
 
 ## Table of Contents
 
