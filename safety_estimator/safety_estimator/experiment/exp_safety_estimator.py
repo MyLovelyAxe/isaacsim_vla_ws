@@ -33,7 +33,7 @@ class SafetyEsimatiorExp:
     future_len: int = 10
     """The horizon length of future of joint states Q and executed actions A, i.e. t, ..., t+M."""
     encoded_dim: int = 16
-    """the dimension of encoded input for both history and proposed action."""
+    """The dimension of encoded input for both history and proposed action."""
     train_set_ratio: float = 0.8
     """Ratio of training set in the whole dataset"""
     valid_set_ratio: float = 0.1
@@ -220,6 +220,8 @@ class SafetyEsimatiorExp:
                     mean_a=self.train_set.mean_a,
                     std_a=self.train_set.std_a,
                     eps=self.train_set.eps,
+                    history_len=self.history_len,
+                    encoded_dim=self.encoded_dim,
                     output_path=self.output_path, 
                     log_id=self.log_id,
                 )

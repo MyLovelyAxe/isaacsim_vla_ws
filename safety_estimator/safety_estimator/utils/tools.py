@@ -19,6 +19,8 @@ def save_model(
     mean_a: torch.Tensor,
     std_a: torch.Tensor,
     eps: torch.Tensor,
+    history_len: int,
+    encoded_dim: int,
     output_path: Path, 
     log_id: str,
 ):
@@ -29,6 +31,8 @@ def save_model(
     :param mean_a: mean of executed actions of training set, shape (6,)
     :param std_a: standard deviation of executed actions of training set, shape (6,)
     :param eps: Epsilon for normalization
+    :param history_len: window length of history, used for construct model
+    :param encoded_dim: The dimension of encoded input of network, used for construct model
     """
 
     os.makedirs(output_path, exist_ok=True)
@@ -42,6 +46,8 @@ def save_model(
         "mean_a": mean_a,
         "std_a": std_a,
         "eps": eps,
+        "history_len": history_len,
+        "encoded_dim": encoded_dim,
         "model_state_dict": model.state_dict(),
     }, save_path)
 
@@ -95,6 +101,25 @@ def load_normalizer(
     a_normalizer = lambda x: (x-checkpoint["mean_a"]) / (checkpoint["std_a"] + checkpoint["eps"])
     
     return q_normalizer, a_normalizer
+
+
+def load_model_hyperparam(
+    load_model_pt: Path,
+    device: torch.device = torch.device("cpu"),
+) -> Tuple[int, int]:
+    """Load the hyper-parameters needed to construct a model from a checkpoint.
+    
+    :param load_path: The path of .pt of a pretrained model
+    :param device: CPU or cuda
+
+    :output history_len: window length of history
+    :output encoded_dim: The dimension of encoded input of network
+    """
+
+    print(f"Load normalizers from {load_model_pt}......")
+    checkpoint = torch.load(load_model_pt, map_location=device)
+    
+    return checkpoint["history_len"], checkpoint["encoded_dim"]
 
 
 def log_epoch(
