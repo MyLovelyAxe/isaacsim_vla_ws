@@ -2,7 +2,11 @@
 
 This sub-module manages the entire lifecycle of safety estimator network, including dataloader, experiment pipeline, training and testing, reloading trained weights, etc.
 
-#### 1. Build package
+#### 1. Data diagram
+
+<img src="safety_estimator/media/safety_estimator_data.drawio.svg" width="800"/>
+
+#### 2. Build package
 
 Build `/safety_estimator` as an importable package:
 
@@ -12,7 +16,7 @@ cd ~/isaacsim_vla_ws/safety_estimator
 pip install -e .
 ```
 
-#### 2. Train
+#### 3. Train
 
 Train safety estimator network:
 
@@ -24,7 +28,7 @@ python train.py
 
 The trained checkpoint `.pt` and a log of training and validation process in `.json` will be stored under `~/isaacsim_vla_ws/safety_estimator/safety_estimator/checkpoints`.
 
-#### 3. Test
+#### 4. Test
 
 Test a pretrained checkpoint:
 
@@ -34,7 +38,7 @@ cd ~/isaacsim_vla_ws/safety_estimator
 python train.py --test --load_model_pt <checkpoint_path.pt>
 ```
 
-#### 4. Online inference
+#### 5. Online inference
 
 Receive live-stream history window of joint states and executed actions from zmq socket, and estimate a risk score with a pretrained checkpoint:
 
