@@ -55,7 +55,7 @@ This workspace provides helpful commands to:
 
 The following diagram describes how messages are exchanged between Isaac Sim and VLA model ([LeRobot SmolVLA](https://huggingface.co/blog/smolvla) in this project) with management of package `vla_center`, including images, joint states of robot arm, between Isaac Sim and VLA model:
 
-<img src="media/vla_center_diagram.drawio.svg" width="800"/>
+<img src="media/vla_center_safety_estimator_diagram.drawio.svg" width="800"/>
 
 1. the topica `/camera1_rgb` and `/camera2_rgb` receives RGB images from simulated camera in Isaac Sim, and sends them to **obs ZMQ socket**;
 
@@ -64,6 +64,8 @@ The following diagram describes how messages are exchanged between Isaac Sim and
 3. the **obs ZMQ socket** sends the RGB images and current joint states to VLA model, i.e. [SmolVLA](git@github.com:MyLovelyAxe/lerobot.git);
 
 4. the **act ZMQ socket** receives the result action values for each joint of robot arm from VLA model, and sends them to topic `/joint_commmand`, as target state in Isaac Sim;
+
+5. the buffers in action sender node stores a short history from topic `/joint_states` and returned actions from SmolVLA, used for control action generation of SmolVLA by a safety estiamtor;
 
 #### 3. Safety estimation
 

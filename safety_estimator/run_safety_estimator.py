@@ -85,7 +85,7 @@ def update_risk_bar(risk_value):
     fig.canvas.draw()
     fig.canvas.flush_events()
 
-update_risk_bar(0.0) # warm-up
+update_risk_bar(0.01) # warm-up
 
 
 time.sleep(2) # give subscribers a short time to connect
