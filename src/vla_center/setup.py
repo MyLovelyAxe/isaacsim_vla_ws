@@ -29,6 +29,7 @@ setup(
             'get_action = vla_center.get_action:main',
             'get_action_record = vla_center.get_action_record:main',
             'replay_record = vla_center.replay_record:main',
+            'estimate_safety = vla_center.estimate_safety:main',
         ],
     },
 )

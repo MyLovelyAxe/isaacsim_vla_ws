@@ -28,7 +28,7 @@ online inference
 ```bash
 conda activate smolvla
 cd ~/isaacsim_vla_ws/safety_estimator
-python run_estimator.py
+python run_safety_estimator.py
 ```
 
 Open questions:

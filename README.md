@@ -324,6 +324,31 @@ Manually stop the process when the recording is finished replaying.
 
 </br>
 
+**Terminal 2**: Start safety estimator
+
+```bash
+conda activate smolvla
+cd ~/isaacsim_vla_ws/safety_estimator
+python run_safety_estimator.py
+```
+
+**Terminal 3**: Start VLA model
+
+```bash
+conda activate smolvla
+cd ~/lerobot/examples/tutorial/smolvla
+python smolvla_safety_estimator.py
+```
+
+**Terminal 4**: Start nodes to send history to estimator
+
+```bash
+cd ~/isaacsim_vla_ws/
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 launch vla_center estimate_safety.launch.py
+```
+
 </details>
 
 ## Open tasks

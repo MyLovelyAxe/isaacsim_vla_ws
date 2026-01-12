@@ -106,7 +106,7 @@ class ReplayRecordedActionsNode(Node):
                 ts=timestamp, 
                 q_history=np.stack(self.hist_q, axis=0), # shape (N,6)
                 a_history=np.stack(self.hist_a, axis=0), # shape (N,6)
-                prop_next_a=a, # shape (6,) # TODO: next action??
+                prop_next_a=a, # shape (6,)
             )
             # send to safety estimator
             self.history_socket.send(history, flags=0)
