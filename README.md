@@ -246,7 +246,7 @@ On Jetson Orin Nano, **inside** the container:
 ```bash
 docker start -ai smolvla_pytorch27_container
 cd /opt/lerobot/examples/tutorial/smolvla
-python smolvla_zmq.py
+python3 smolvla_zmq.py
 ```
 
 </details>
