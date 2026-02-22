@@ -1,0 +1,65 @@
+{
+    "version": "1.0",
+    "file_records": [
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/.thumbs/so101_new_calib.thumb.usd",
+            "source_hash": "40d332c93eabcbecfa5da5c6771b7c7ca762ad1b",
+            "target_url": "./so101_new_calib.thumb.usd",
+            "target_hash": "0649ae7e701eb6d25d7f870f72a23d0f6f880eb0"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/so101_new_calib.usd",
+            "source_hash": "3cf9257ec14af3dff722839a704cbab7c3f75ed7",
+            "target_url": "./so101_new_calib.usd",
+            "target_hash": "417cf352cdca1090dd78de936ff3f2ab490a7568"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/so101_new_calib_base.usd",
+            "source_hash": "9de2c61548ad28d2640649d0bac75a2fd7fa7537",
+            "target_url": "./SubUSDs/so101_new_calib_base.usd",
+            "target_hash": "707e95f723a6ca6c3f5d17cb911a5b67284b1bbc"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/so101_new_calib_physics.usd",
+            "source_hash": "2e76dca06a01d2565d3e2c37cb9cd5a269f4c479",
+            "target_url": "./SubUSDs/so101_new_calib_physics.usd",
+            "target_hash": "73e5f18bda76ed7031b775a8fc8ef1a09a328dfd"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/so101_new_calib_robot.usd",
+            "source_hash": "e9da665c4f3e0ed4e6d5955f4535d2f290b57543",
+            "target_url": "./SubUSDs/so101_new_calib_robot.usd",
+            "target_hash": "47be3cfc2de54fcfb3825613e9cdf91f73fc15bf"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/so101_new_calib_sensor.usd",
+            "source_hash": "af4bbb215c4dcf1ddd942d9c9d664a94be15d5e5",
+            "target_url": "./SubUSDs/so101_new_calib_sensor.usd",
+            "target_hash": "6996d35ab560781be41350c1cd127e20fd34f02d"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/.thumbs/so101_new_calib_base.thumb.usd",
+            "source_hash": "9ea0814b8707791a82712dc424dc0210b60192c6",
+            "target_url": "./so101_new_calib_base.thumb.usd",
+            "target_hash": "31bce452d1bc0a83388eea7be2eda569f0c1fc4f"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/.thumbs/so101_new_calib_physics.thumb.usd",
+            "source_hash": "c53ab50a3a47feb0eba6f88b0eeb04dc9ba99765",
+            "target_url": "./so101_new_calib_physics.thumb.usd",
+            "target_hash": "ac6ac2c80379199d1d43a96836a75d2dfcc7a821"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/.thumbs/so101_new_calib_robot.thumb.usd",
+            "source_hash": "efa10cc8fa17514e3b6065a4051ff7f9b86eec00",
+            "target_url": "./so101_new_calib_robot.thumb.usd",
+            "target_hash": "c337545eff333c2438e61a4d7fa653888397729b"
+        },
+        {
+            "source_url": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/RobotStudio/so101_new_calib/configuration/.thumbs/so101_new_calib_sensor.thumb.usd",
+            "source_hash": "6a2e2149a75b65b7ad4ce6a11fe5983edfa360a5",
+            "target_url": "./so101_new_calib_sensor.thumb.usd",
+            "target_hash": "6188775cb932d39542b541a3364557c2811b7d29"
+        }
+    ]
+}

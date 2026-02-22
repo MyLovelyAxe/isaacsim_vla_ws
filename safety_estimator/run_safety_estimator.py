@@ -1,6 +1,3 @@
-
-
-# PS: add a sigmoid on direct output of network, since loss function BCEWithLogitsLoss
 import os
 import io
 import zmq
