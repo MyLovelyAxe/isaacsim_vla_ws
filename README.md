@@ -263,7 +263,7 @@ For now, the safety estimatoronly only runs on host machine, not on Jetson Orin 
 ```bash
 cd ~/isaacsim_vla_ws/bash
 source setup_isaacsim.sh
-./start_isaac_sim.sh
+./start_isaac_sim_so101_new_calib.sh
 ```
 
 Pres **Play** button.
