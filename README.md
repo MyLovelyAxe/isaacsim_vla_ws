@@ -181,8 +181,8 @@ This starts Rviz2 with pre-defined `.rviz` config, which visualizes images from 
 ```bash
 cd ~/isaacsim_vla_ws/bash
 source setup_systemros.sh
-./give_joint_command.sh # give new target state
-./reset_joint_states.sh # reset to initial state
+./give_joint_command.sh # give new target state, --new-calib gives target under new calibration, similar logic for --old-calib. New calib by default. 
+./reset_joint_states.sh # reset to initial state, --new-calib gives target under new calibration, similar logic for --old-calib. New calib by default. 
 ```
 
 This quickly test the controller node of action graph for the robot arm model, by giving one-time target state or reset to initial state, which is specified for robot SO100;
