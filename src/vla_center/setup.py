@@ -24,6 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'send_joint_state = vla_center.send_joint_state:main',
             'send_observation = vla_center.send_observation:main',
             'send_observation_2cam = vla_center.send_observation_2cam:main',
             'get_action = vla_center.get_action:main',
