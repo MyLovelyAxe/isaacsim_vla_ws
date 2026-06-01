@@ -218,7 +218,7 @@ ros2 launch vla_center send_obs_get_act.launch.py
 ```bash
 conda activate smolvla
 cd ~/lerobot/examples/tutorial/smolvla
-python smolvla_zmq.py
+python so101_follower_sim2real.py
 ```
 
 </details>
@@ -246,7 +246,7 @@ On Jetson Orin Nano, **inside** the container:
 ```bash
 docker start -ai smolvla_pytorch27_container
 cd /opt/lerobot/examples/tutorial/smolvla
-python3 smolvla_zmq.py
+python so101_follower_sim2real.py
 ```
 
 </details>
