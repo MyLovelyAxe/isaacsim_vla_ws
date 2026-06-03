@@ -353,6 +353,38 @@ ros2 launch vla_center estimate_safety.launch.py
 
 </details>
 
+
+#### 4. sim2real synchronization
+
+The following functions are for synchronization between simulated and real robot, i.e. given a fixed trajectory, move the simulated and real robot simultaneously. 
+
+**Terminal 1**: start isaac sim
+
+```bash
+cd ~/isaacsim_vla_ws/bash
+source setup_isaacsim.sh
+./start_isaac_sim_so101_new_calib.sh
+```
+
+**Terminal 2**: Start node only for joint states
+
+```bash
+cd ~/isaacsim_vla_ws/
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 launch vla_center exchange_joint_state.launch.py
+```
+
+**Terminal 3**: Send a fixed trajectory
+
+```bash
+conda activate smolvla
+cd ~/lerobot/examples/tutorial/smolvla
+python test_follower.py --sim --real
+```
+
+
+
 ## Open tasks
 
 For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Therefore the on-going open tasks of this project include:

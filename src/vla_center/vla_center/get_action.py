@@ -23,9 +23,11 @@ class VLAActionReceiverNode(Node):
         # to receive returned action from VLA model
         self.act_context = zmq.Context()
         self.act_socket = self.act_context.socket(zmq.SUB)
-        self.act_socket.connect("tcp://127.0.0.1:5555")
         self.act_socket.setsockopt(zmq.SUBSCRIBE, b"") # subscribe to all message
+        # TODO: only keep the latest one msg, necessary?
+        # obs_socket.setsockopt(zmq.CONFLATE, 1)
         self.act_socket.RCVTIMEO = 0  # 0 ms timeout
+        self.act_socket.connect("tcp://127.0.0.1:5555")
 
         # timer
         self.timer = self.create_timer(0.01, self.receive_action_callback)

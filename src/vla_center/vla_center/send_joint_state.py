@@ -74,7 +74,7 @@ class CurrentJointStateSenderNode(Node):
         buf = io.BytesIO()
         np.savez_compressed(
             buf,
-            ts=np.array([ts], dtype=np.float64),
+            ts=np.array([ts], dtype=np.float32),
             joints=joints,
         )
         return buf.getvalue()
