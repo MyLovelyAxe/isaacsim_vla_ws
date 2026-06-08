@@ -196,7 +196,7 @@ Always start Isaac Sim GUI on the host machine, and press **PLAY** button to sta
 ```bash
 cd ~/isaacsim_vla_ws/bash
 source setup_isaacsim.sh
-./start_isaac_sim.sh
+./start_isaac_sim_so101_new_calib.sh
 ```
 
 <details>
@@ -217,8 +217,8 @@ ros2 launch vla_center send_obs_get_act.launch.py
 
 ```bash
 conda activate smolvla
-cd ~/lerobot/examples/tutorial/smolvla
-python so101_follower_sim2real.py
+cd ~/lerobot/isaacsim_sim2real/scripts
+python so101_follower_smolvla.py
 ```
 
 </details>
@@ -338,8 +338,8 @@ python run_safety_estimator.py
 
 ```bash
 conda activate smolvla
-cd ~/lerobot/examples/tutorial/smolvla
-python smolvla_safety_estimator.py
+cd ~/lerobot/isaacsim_sim2real/scripts
+python so101_follower_smolvla_safety_estimator.py
 ```
 
 **Terminal 4**: Start nodes to send history to estimator
@@ -379,8 +379,8 @@ ros2 launch vla_center exchange_joint_state.launch.py
 
 ```bash
 conda activate smolvla
-cd ~/lerobot/examples/tutorial/smolvla
-python test_follower.py --sim --real
+cd ~/lerobot/isaacsim_sim2real/scripts
+python so101_follower_fix_traj.py --sim --real
 ```
 
 
