@@ -1,0 +1,17 @@
+{
+  "python.defaultInterpreterPath": "/home/hardli/isaacsim/kit/python/bin/python3",
+
+  "python.analysis.extraPaths": [
+    "/home/hardli/isaacsim/exts/isaacsim.simulation_app",
+    "/home/hardli/isaacsim/exts/isaacsim.core.api",
+    "/home/hardli/isaacsim/exts/isaacsim.core.utils",
+    "/home/hardli/isaacsim/exts/isaacsim.core.prims",
+    "/home/hardli/isaacsim/kit/python/lib/python3.11/site-packages"
+  ],
+
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none"
+  }
+}
