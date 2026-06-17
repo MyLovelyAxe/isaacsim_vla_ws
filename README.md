@@ -360,10 +360,11 @@ The following functions are for synchronization between simulated and real robot
 
 **Terminal 1**: start isaac sim
 
+Launch a USD with temporarily higher maximum joint velocity, in order to let simulated robot arm catch up the real leader arm:
+
 ```bash
-cd ~/isaacsim_vla_ws/bash
-source setup_isaacsim.sh
-./start_isaac_sim_so101_new_calib.sh
+cd ~/isaacsim
+./isaac-sim.sh --exec ~/isaacsim_vla_ws/isaacsim_scene/scripts/tmp_max_joint_vel.py
 ```
 
 **Terminal 2**: Start node only for joint states
