@@ -356,7 +356,7 @@ python run_safety_estimator.py
 
 #### 4. sim2real synchronization
 
-The following functions are for synchronization between simulated and real robot, i.e. given a fixed trajectory, move the simulated and real robot simultaneously. 
+The following functions are for synchronization between simulated and real robot.
 
 **Terminal 1**: start isaac sim
 
@@ -375,7 +375,12 @@ source install/setup.bash
 ros2 launch vla_center exchange_joint_state.launch.py
 ```
 
-**Terminal 3**: Send a fixed trajectory
+<details>
+<summary>Case 1: Execute a fixed trajectory</summary>
+
+</br>
+
+**Terminal 3**: Start the process to give a fixed trajectory:
 
 ```bash
 conda activate smolvla
@@ -383,6 +388,22 @@ cd ~/lerobot/isaacsim_sim2real/scripts
 python so101_follower_fix_traj.py --sim --real
 ```
 
+</details>
+
+<details>
+<summary>Case 2: Use leader arm to teleoperate</summary>
+
+</br>
+
+**Terminal 3**: Start the process to use leader arm guide both real follower arm and simulated robot arm:
+
+```bash
+conda activate smolvla
+cd ~/lerobot/isaacsim_sim2real/scripts
+python so101_teleoperate.py --sim --real
+```
+
+</details>
 
 
 ## Open tasks
