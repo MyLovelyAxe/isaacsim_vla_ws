@@ -27,6 +27,7 @@ setup(
             'send_joint_state = vla_center.send_joint_state:main',
             'send_observation = vla_center.send_observation:main',
             'send_observation_2cam = vla_center.send_observation_2cam:main',
+            'send_obs_side_wrist = vla_center.send_obs_side_wrist:main',
             'get_action = vla_center.get_action:main',
             'get_action_record = vla_center.get_action_record:main',
             'replay_record = vla_center.replay_record:main',

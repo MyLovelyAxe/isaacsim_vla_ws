@@ -407,6 +407,42 @@ python so101_teleoperate.py --sim --real
 </details>
 
 
+
+#### 5. Record simulation dataset
+
+The following functions are for recording simulation dataset to fine-tune VLA model, including simulated images and joint states of simulated robot.
+
+**Terminal 1**: start isaac sim
+
+Launch a USD with temporarily higher maximum joint velocity, in order to let simulated robot arm catch up the real leader arm:
+
+```bash
+cd ~/isaacsim
+./isaac-sim.sh --exec ~/isaacsim_vla_ws/isaacsim_scene/scripts/tmp_max_joint_vel.py
+```
+
+**Terminal 2**: Start node to transfer simulated data
+
+```bash
+cd ~/isaacsim_vla_ws/
+source bash/setup_systemros.sh
+source install/setup.bash
+ros2 launch vla_center record_sim_dataset.launch.py
+```
+
+**Terminal 3**: Start process to record dataset
+
+```bash
+conda activate smolvla
+cd ~/lerobot/isaacsim_sim2real/scripts
+python so101_record.py \
+    --num_episodes 2 \
+    --dataset_name test_sim2real_data \
+    --sim \
+    --real
+```
+
+
 ## Open tasks
 
 For now the perception-action loop with Isaac Sim and VLA model is setup, but only zero-shot SmolVLA is tested, the performance needs to be improved by fine-tuning SmolVLA. Therefore the on-going open tasks of this project include:
