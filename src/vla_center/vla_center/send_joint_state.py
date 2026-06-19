@@ -72,7 +72,7 @@ class CurrentJointStateSenderNode(Node):
         :param ts: current timestamp
         """
         buf = io.BytesIO()
-        np.savez_compressed(
+        np.savez(
             buf,
             ts=np.array([ts], dtype=np.float32),
             joints=joints,

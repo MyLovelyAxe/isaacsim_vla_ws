@@ -167,7 +167,7 @@ class VLAActionReceiverRecordNode(Node):
         """
 
         buf = io.BytesIO()
-        np.savez_compressed(
+        np.savez(
             buf,
             ts=np.array([ts], dtype=np.float64),
             joint_states_history=q_history,

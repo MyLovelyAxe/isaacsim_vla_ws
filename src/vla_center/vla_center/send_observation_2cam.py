@@ -118,7 +118,7 @@ class VLAObservationSender2CamNode(Node):
         :param encoded_flag: bool (True if img1_bytes is JPEG, False if raw)
         """
         buf = io.BytesIO()
-        np.savez_compressed(
+        np.savez(
             buf,
             ts=np.array([ts], dtype=np.float64),
             joints=joints,

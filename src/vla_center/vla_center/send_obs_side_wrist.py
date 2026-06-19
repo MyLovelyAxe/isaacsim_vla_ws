@@ -111,7 +111,7 @@ class VLAObservationSenderWristSideNode(Node):
         :param encoded_flag: bool (True if side_img_bytes is JPEG, False if raw)
         """
         buf = io.BytesIO()
-        np.savez_compressed(
+        np.savez(
             buf,
             ts=np.array([ts], dtype=np.float64),
             joints=joints,
