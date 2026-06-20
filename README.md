@@ -412,14 +412,19 @@ python so101_teleoperate.py --sim --real
 
 The following functions are for recording simulation dataset to fine-tune VLA model, including simulated images and joint states of simulated robot.
 
-**Terminal 1**: start isaac sim
-
-Launch a USD with temporarily higher maximum joint velocity, in order to let simulated robot arm catch up the real leader arm:
+**Terminal 1**: Launch a Isaac Sim scene for recording simulated dataset
 
 ```bash
 cd ~/isaacsim
-./isaac-sim.sh --exec ~/isaacsim_vla_ws/isaacsim_scene/scripts/tmp_max_joint_vel.py
+./isaac-sim.sh --exec ~/isaacsim_vla_ws/isaacsim_scene/scripts/reset_cube_online.py
 ```
+
+which fulfill these requirements:
+
+1. Launch an existing USD with temporarily higher maximum joint velocity, in order to let simulated robot arm catch up the real leader arm;
+
+2. Type R key on keyboard in the viewpoint window of Isaac Sim, to reset the cube's position without restarting the scene;
+
 
 **Terminal 2**: Start node to transfer simulated data
 
