@@ -1,10 +1,10 @@
 """
 Launch Isaac Sim Full 5.1, open existing USD, temporarily update joint max velocity,
-and reset cube to initial pose when pressing R.
+and reset cube to the USD-saved initial pose when pressing R.
 
 Run with:
 cd ~/isaacsim
-./isaac-sim.sh --exec /home/hardli/isaacsim_vla_ws/isaacsim_scene/scripts/test_reset.py
+./isaac-sim.sh --exec /home/hardli/isaacsim_vla_ws/isaacsim_scene/scripts/reset_cube_online.py
 """
 
 from pathlib import Path
@@ -16,7 +16,7 @@ import omni.kit.app
 import omni.timeline
 import omni.usd
 from isaacsim.core.utils.stage import open_stage
-from pxr import Gf, PhysxSchema, UsdGeom, UsdPhysics
+from pxr import Gf, PhysxSchema, UsdPhysics
 
 # Local imports
 THIS_DIR = Path(__file__).resolve().parent
@@ -32,8 +32,6 @@ from utils_vla.constants import (
 TMP_MAX_JOINT_VEL = 300.0
 
 CUBE_PRIM_PATH = "/World/Cube"
-CUBE_INITIAL_TRANSLATION = Gf.Vec3d(0.8, 0.05, 0.1)
-CUBE_INITIAL_ORIENTATION = Gf.Quatd(1.0, 0.0, 0.0, 0.0)
 
 print(f"Opening USD: {DEFAULT_USD_PATH}")
 open_stage(str(DEFAULT_USD_PATH))
@@ -42,7 +40,9 @@ stage = omni.usd.get_context().get_stage()
 if stage is None:
     raise RuntimeError("Failed to open USD stage")
 
+# ------------------------------------------------------------------
 # Temporarily update joint max velocity
+# ------------------------------------------------------------------
 for joint_name in JOINT_NAME_ORDER:
     joint_prim_path = f"{SO101_NEW_CALIB_JOINTS_PRIM}/{joint_name}"
     joint_prim = stage.GetPrimAtPath(joint_prim_path)
@@ -62,27 +62,34 @@ for joint_name in JOINT_NAME_ORDER:
     attr.Set(TMP_MAX_JOINT_VEL)
     print(f"  Temporary max velocity: {attr.Get()}")
 
-# Cube xform setup
+# ------------------------------------------------------------------
+# Cube setup
+# ------------------------------------------------------------------
 cube_prim = stage.GetPrimAtPath(CUBE_PRIM_PATH)
+
 if not cube_prim.IsValid():
     raise RuntimeError(f"Cube prim not found: {CUBE_PRIM_PATH}")
 
-xformable = UsdGeom.Xformable(cube_prim)
+translate_attr = cube_prim.GetAttribute("xformOp:translate")
+orient_attr = cube_prim.GetAttribute("xformOp:orient")
 
-translate_op = None
-orient_op = None
+if not translate_attr.IsValid():
+    raise RuntimeError(
+        f"{CUBE_PRIM_PATH} does not contain attribute xformOp:translate"
+    )
 
-for op in xformable.GetOrderedXformOps():
-    if op.GetOpType() == UsdGeom.XformOp.TypeTranslate and translate_op is None:
-        translate_op = op
-    elif op.GetOpType() == UsdGeom.XformOp.TypeOrient and orient_op is None:
-        orient_op = op
+if not orient_attr.IsValid():
+    raise RuntimeError(
+        f"{CUBE_PRIM_PATH} does not contain attribute xformOp:orient"
+    )
 
-if translate_op is None:
-    translate_op = xformable.AddTranslateOp()
+# Read initial pose directly from USD
+CUBE_INITIAL_TRANSLATION = Gf.Vec3d(translate_attr.Get())
+CUBE_INITIAL_ORIENTATION = Gf.Quatd(orient_attr.Get())
 
-if orient_op is None:
-    orient_op = xformable.AddOrientOp(precision=UsdGeom.XformOp.PrecisionDouble)
+print("Cube initial pose loaded from USD:")
+print(f"  translation: {CUBE_INITIAL_TRANSLATION}")
+print(f"  orientation: {CUBE_INITIAL_ORIENTATION}")
 
 timeline = omni.timeline.get_timeline_interface()
 
@@ -92,22 +99,26 @@ def reset_cube():
 
     timeline.pause()
 
-    # Do NOT clear xform op order; preserve scale and existing transform structure.
-    translate_op.Set(CUBE_INITIAL_TRANSLATION)
-    orient_op.Set(CUBE_INITIAL_ORIENTATION)
+    # Restore original pose stored in USD
+    translate_attr.Set(CUBE_INITIAL_TRANSLATION)
+    orient_attr.Set(CUBE_INITIAL_ORIENTATION)
 
+    # Reset rigid-body velocity
     rb_api = UsdPhysics.RigidBodyAPI.Get(stage, CUBE_PRIM_PATH)
     if rb_api:
         rb_api.CreateVelocityAttr().Set(Gf.Vec3f(0.0, 0.0, 0.0))
         rb_api.CreateAngularVelocityAttr().Set(Gf.Vec3f(0.0, 0.0, 0.0))
 
     omni.kit.app.get_app().update()
+
     timeline.play()
 
     print("Cube reset done")
 
 
+# ------------------------------------------------------------------
 # Keyboard callback
+# ------------------------------------------------------------------
 _input = carb.input.acquire_input_interface()
 _appwindow = omni.appwindow.get_default_app_window()
 _keyboard = _appwindow.get_keyboard()
@@ -118,15 +129,17 @@ def on_keyboard_event(event, *args):
         if event.input == carb.input.KeyboardInput.R:
             print("R pressed")
             reset_cube()
+
     return True
 
 
-# Keep this global
-_keyboard_sub = _input.subscribe_to_keyboard_events(_keyboard, on_keyboard_event)
+# Keep subscription alive
+_keyboard_sub = _input.subscribe_to_keyboard_events(
+    _keyboard,
+    on_keyboard_event,
+)
 
-# NOTE: 
-# this starts the scene at the beginning of launching the app, 
-# corresponding to manually clicking on "play" button
-# timeline.play() 
+# Optional: automatically start simulation
+# timeline.play()
 
 print("Scene running. Click viewport, then press R to reset cube.")
